@@ -1,0 +1,130 @@
+Practica 1
+
+--1)
+Tiene 32*128=4096 bytes de memoria.
+
+--2)
+Habria que cambiar la constante NumPhysPages.
+
+--3)
+El tamaño de un disco es:
+
+SectorSize = 128
+SectorsPerTrack = 32
+NumTracks = 32
+
+Total = 128*32*32 = 131072 bytes
+
+--4)
+Nachos simula 58 instrucciones de MIPS.
+
+--5)
+
+Primero suma los registros rs y rt. Luego hace el checkeo de overflow ,si los 
+sumandos tienen igual signo pero la suma tiene el signo opuesto, hay overflow.
+Si hay overflow, se lanza una excepcion, sino se guarda el resultado de la suma.
+
+--6)
+
+main (threads/main.cc)
+    
+    DEBUG (threads/utility.cc)
+        DebugIsEnabled (threads/utility.cc)
+
+    Initialize (threads/system.cc)
+        CallOnUserAbort (machine/sysdep.cc)
+        RandomInit (machine/sysdep.cc)
+        Enable (machine/interrupt.cc)
+        DebugInit (threads/utility.cc)
+        setStatus (threads/threads.cc)
+        setUp (threads/preemptive.cc)
+        Statistics (machine/stats.cc)
+        Interrupt (machine/interrupt.cc)
+        Scheduler (threads/scheduler.cc)
+        Timer (machine/timer.cc)
+        PreemptiveScheduler (threads/preemptive.cc)
+        Thread (threads/thread.cc)
+        
+    ThreadTest (threads/threadtest.cc)
+        DEBUG (threads/utility.cc)
+        Thread (threads/thread.cc)
+        Fork (threads/thread.cc)
+        SimpleThread (threads/threadtest.cc)
+        
+    Finish (threads/thread.cc)
+        DEBUG (threads/utility.cc)
+        SetLevel (machine/interrupt.cc)
+        Sleep (threads/thread.cc)       
+
+--7) Se prefiere emular una cpu para simplificar un poco la forma en la que
+se puede configurar las caracteristicas de la maquina, y tambien se puede
+"reiniciar" la maquina muy rapidamente, sin tener que reiniciar la maquina
+fisica donde se esta ejecutando. Tambien facilita el hecho de poder correr 
+el sistema en cualquier lugar que pueda correr una maquina virtual.
+
+--8) Las flags se activan haciendo -d flags:
+Estas flags imprimen los mensajes de debug de cada parte del sistema. 
+    '+' -- turn on all debug messages
+    't' -- thread system
+    's' -- semaphores, locks, and conditions
+    'i' -- interrupt emulation
+    'm' -- machine emulation (USER_PROGRAM)
+    'd' -- disk emulation (FILESYS)
+    'f' -- file system (FILESYS)
+    'a' -- address spaces (USER_PROGRAM)
+    'n' -- network emulation (NETWORK)
+
+--9)
+    ASSERT: Trata de asegurar que algo sea true. Toma una condicion, si es falsa imprime un mensaje con la linea y archivo donde se viola esta, y aborta la ejecución.
+    DEBUG: si esta seteada la flag debug, imprime el mensaje de depuración dado
+como argumento.  
+
+--10)
+	USER_PROGRAM, FILESYS_NEEDED y FILESYS_STUB estan definidas en code/userprog/Makefile, y las primeras dos tambien estan en code/network/Makefile.
+	NETWORK esta definida en code/network/Makefile. 
+    
+--11) La clase List, son listas simplemente enlazadas, y la clase Synchlist, son
+listas con las siguientes propiedades:
+	1- Los threads que intentan eliminar un elemento de la lista, van a esperar
+hasta que la lista tenga algun elemento.
+	2- Solo un thread a al vez puede acceder a la lista.
+
+--12) La funcion main esta definida en code/threads/main.cc, code/bin/main.c, 
+code/bin/out.c y code/bin/coff2flat.c.
+El main del ejecutable nachos esta definido en code/threads/main.cc.
+
+--13) NACHOS soporta estas lineas de comando:
+nachos -d <debugflags> -rs <random seed #>
+              -s -x <nachos file> -c <consoleIn> <consoleOut>
+              -f -cp <unix file> <nachos file>
+              -p <nachos file> -r <nachos file> -l -D -t
+              -n <network reliability> -m <machine id>
+              -o <other machine id>
+              -z
+
+    -d causes certain debugging messages to be printed (cf. utility.h)
+    -rs causes Yield to occur at random (but repeatable) spots
+    -z prints the copyright message
+
+  USER_PROGRAM
+    -s causes user programs to be executed in single-step mode
+    -x runs a user program
+    -c tests the console
+
+  FILESYS
+    -f causes the physical disk to be formatted
+    -cp copies a file from UNIX to Nachos
+    -p prints a Nachos file to stdout
+    -r removes a Nachos file from the file system
+    -l lists the contents of the Nachos directory
+    -D prints the contents of the entire file system
+    -t tests the performance of the Nachos file system
+
+  NETWORK
+    -n sets the network reliability
+    -m sets this machine's host id (needed for the network)
+    -o runs a simple test of the Nachos network software
+
+La opcion -rs hace que el Yield ocurra aleatoriamente.
+
+

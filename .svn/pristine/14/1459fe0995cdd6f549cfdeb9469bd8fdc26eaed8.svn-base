@@ -1,0 +1,6 @@
+
+4) El problema de inversion de prioridades se podria solucionar para locks y
+variables de condicion por que siempre el thread que hace acquire es el unico
+que puede hacer release. En cambio para semaforos no se puede, por que si un
+thread hace P(), no queda registrado en ningun lado quien fue, y luego otro
+thread distinto puede hacer V().
