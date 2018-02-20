@@ -100,6 +100,8 @@ Semaphore::V()
 // Dummy functions -- so we can compile our later assignments 
 // Note -- without a correct implementation of Condition::Wait(), 
 // the test case in the network assignment won't work!
+
+// Constructor de un Lock
 Lock::Lock(const char* debugName) 
 {
     name = debugName;
@@ -107,11 +109,13 @@ Lock::Lock(const char* debugName)
     owner = NULL;    
 }
 
+// Destructor de un Lock
 Lock::~Lock() 
 {
     delete s;    
 }
 
+// Funcion para tomar un Lock
 void Lock::Acquire() 
 {
     ASSERT(!isHeldByCurrentThread());
@@ -119,6 +123,7 @@ void Lock::Acquire()
     owner = currentThread;
 }
 
+// Funcion para liberar un Lock
 void Lock::Release() 
 {
     ASSERT(isHeldByCurrentThread());
@@ -126,11 +131,14 @@ void Lock::Release()
     s->V();
 }
 
+//Funcion que dice si el lock esta tomado
+//por el thread que esta corriendo
 bool Lock::isHeldByCurrentThread()
 {
     return currentThread == owner;
 }
 
+//Constructor de una variable de condicion
 Condition::Condition(const char* debugName, Lock* conditionLock) 
 {
     name = debugName;
@@ -138,11 +146,13 @@ Condition::Condition(const char* debugName, Lock* conditionLock)
     queue = new List<Semaphore*>();    
 }
 
+//Destructor de una variable de condicion
 Condition::~Condition() 
 {
     delete queue; 
 }
 
+//Funcion de espera de la condicion
 void Condition::Wait() 
 {
     Semaphore* s = new Semaphore("sem_wait",0);
@@ -152,6 +162,7 @@ void Condition::Wait()
     l->Acquire();
 }
 
+//Funcion que despierta y libera un thread
 void Condition::Signal() 
 {
     if(!queue->IsEmpty()) {
@@ -160,6 +171,7 @@ void Condition::Signal()
     }
 }
 
+//Funcion que despierta y libera a todos los thread
 void Condition::Broadcast() 
 {
     while(!queue->IsEmpty()) {
@@ -169,6 +181,7 @@ void Condition::Broadcast()
 }
 
 //Defino funciones de Puerto
+//Constructor de Port
 Port::Port(const char* debugName) 
 {
     name = debugName;
@@ -179,6 +192,7 @@ Port::Port(const char* debugName)
     receptor = new Condition("hay receptor",l);   
 }
 
+//Destructor de un Port
 Port::~Port()
 {
     delete l;
@@ -187,6 +201,8 @@ Port::~Port()
     delete receptor;
 }
 
+//Funcion de envio de mensaje m
+//a traves del puerto
 void Port::Send(int m) 
 {
     l->Acquire();
@@ -200,6 +216,8 @@ void Port::Send(int m)
     l->Release();
 }
 
+//Funcion de recepcion de mensaje
+//a traves de puerto
 void Port::Receive(int *m) 
 {
     l->Acquire();

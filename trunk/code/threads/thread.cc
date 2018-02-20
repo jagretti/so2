@@ -341,6 +341,7 @@ Thread::RestoreUserState()
 	machine->WriteRegister(i, userRegisters[i]);
 }
 
+// Funciones de archivos VER!
 int
 Thread::AddFile(OpenFile *f)
 {
