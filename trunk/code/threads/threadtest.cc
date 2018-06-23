@@ -126,6 +126,7 @@ void JoinTest()
 {
     Thread* t = new Thread("Hijo", NPRIO-1, true);
     t->Fork(tHijo, NULL);
+    printf("Forkee el hijo\n");
     printf("Hago Join\n");
     t->Join();
     printf("Termina padre! \n");

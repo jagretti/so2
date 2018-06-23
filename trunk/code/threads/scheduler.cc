@@ -52,6 +52,7 @@ Scheduler::~Scheduler()
 //	Put it on the ready list, for later scheduling onto the CPU.
 //
 //	"thread" is the thread to be put on the ready list.
+// AGREGADO PRIORIDAD EN LOS THREADS
 //----------------------------------------------------------------------
 
 void
@@ -71,6 +72,7 @@ Scheduler::ReadyToRun (Thread *thread)
 //	If there are no ready threads, return NULL.
 // Side effect:
 //	Thread is removed from the ready list.
+// BUSCA EL SIGUIENTE A CORRER DEPENDIENDO DE LA PRIORIDAD
 //----------------------------------------------------------------------
 
 Thread *
@@ -79,6 +81,8 @@ Scheduler::FindNextToRun ()
     int p;
     for(p = NPRIO-1; p >= 0; p--) {
         if(!readyList[p]->IsEmpty()) {
+            DEBUG('t', "Retornando thread %d de la cola de prioridad\n",
+                p);
             return readyList[p]->Remove();
         }
     }
@@ -107,7 +111,7 @@ Scheduler::Run (Thread *nextThread)
 #ifdef USER_PROGRAM			// ignore until running user programs 
     if (currentThread->space != NULL) {	// if this thread is a user program,
         currentThread->SaveUserState(); // save the user's CPU registers
-	currentThread->space->SaveState();
+	    currentThread->space->SaveState();
     }
 #endif
     
@@ -135,13 +139,13 @@ Scheduler::Run (Thread *nextThread)
     // point, we were still running on the old thread's stack!
     if (threadToBeDestroyed != NULL) {
         delete threadToBeDestroyed;
-	threadToBeDestroyed = NULL;
+	    threadToBeDestroyed = NULL;
     }
     
 #ifdef USER_PROGRAM
     if (currentThread->space != NULL) {		// if there is an address space
         currentThread->RestoreUserState();     // to restore, do it.
-	currentThread->space->RestoreState();
+	    currentThread->space->RestoreState();
     }
 #endif
 }

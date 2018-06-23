@@ -172,9 +172,10 @@ Thread::CheckOverflow()
 void
 Thread::Finish ()
 {
+#ifdef USER_PROGRAM
     if(useJoin)
         joinPort->Send(currentThread->exitS);
-
+#endif
     interrupt->SetLevel(IntOff);		
     ASSERT(this == currentThread);
 
