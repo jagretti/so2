@@ -31,6 +31,8 @@
 *.out
 *.app
 
+*.swp
+
 code/bin/coff2flat
 code/bin/coff2noff
 code/bin/disassemble

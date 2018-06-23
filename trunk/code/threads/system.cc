@@ -179,7 +179,7 @@ Initialize(int argc, char **argv)
     
 #ifdef USER_PROGRAM
     machine = new Machine(debugUserProg);	// this must come first
-    bitmap = new Bitmap(32); //cantidad de paginas fisicas
+    bitmap = new BitMap(32); //cantidad de paginas fisicas
 #endif
 
 #ifdef FILESYS

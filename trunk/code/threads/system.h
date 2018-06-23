@@ -31,8 +31,9 @@ extern Timer *timer;				// the hardware alarm clock
 
 #ifdef USER_PROGRAM
 #include "machine.h"
+#include "bitmap.h"
 extern Machine* machine;	// user program memory and registers
-extern Bitmap* bitmap;
+extern BitMap* bitmap;
 #endif
 
 #ifdef FILESYS_NEEDED 		// FILESYS or FILESYS_STUB 

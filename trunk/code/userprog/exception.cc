@@ -113,8 +113,10 @@ ExceptionHandler(ExceptionType which)
                 int arg = machine->ReadRegister(4);
                 char name[128];
                 readStrFromUser(arg, name);
-                DEBUG('u',"Creo archivo %s\n", name);
-                fileSystem->Create(name,0);
+                if (fileSystem->Create(name,0))
+                    DEBUG('a', "Se creo el archivo %s correctamente\n", name);
+                else
+                    DEBUG('a', "Error creando el archivo %s \n", name);
                 incrementarPC();
                 break;
             }
@@ -127,10 +129,11 @@ ExceptionHandler(ExceptionType which)
                 readBuffFromUsr(machine->ReadRegister(4), buff, size);
                 OpenFile *f = currentThread->GetFile(fd);
                 if (f == NULL)
+                    incrementarPC();
 					break;
+                DEBUG('a', "Escribo en archivo %d\n", fd);
                 f->Write(buff, size);
                 delete []buff;
-//                printf("llegue a write\n");
                 incrementarPC();
                 break;
             }
@@ -148,6 +151,7 @@ ExceptionHandler(ExceptionType which)
 				int r = f->Read(buff, size);
 				writeBuffToUsr(buff, machine->ReadRegister(4),r);
 				machine->WriteRegister(2,r);
+                DEBUG('a', "Leo en archivo %d\n", fd);
 				incrementarPC();
                 break;
 			}
@@ -156,11 +160,12 @@ ExceptionHandler(ExceptionType which)
 				readStrFromUser(machine->ReadRegister(4),name);
 				OpenFile *f = fileSystem->Open(name);
 				if (f == NULL) {
+                    DEBUG('a', "Archivo con nombre %s vacio\n", name);
 					machine->WriteRegister(2,-1);
 				} else {
 					int fd = currentThread->AddFile(f);
-//					printf("%d\n",fd);
 					machine->WriteRegister(2,fd);
+                    DEBUG('a', "Se abrio archivo con nombre %s y fd %d\n", name, fd);
 				}
 				incrementarPC();
                 break;
@@ -168,7 +173,7 @@ ExceptionHandler(ExceptionType which)
             case SC_Close:{
 				int fd = machine->ReadRegister(4);
 				currentThread->CloseFile(fd);
-//				printf("llegue a close\n");
+                DEBUG('a', "Se cerro archivo con fd %d", fd);
 				incrementarPC();
                 break;
 			}
