@@ -15,20 +15,24 @@
 
 class SynchConsole {
     public:
-        SynchConsole(const char* name);
+        SynchConsole(const char *name);
 
         ~SynchConsole();
 
-        void WriteChar(char* data);
+        void WriteChar(char *data);
 
-        void ReadChar(char* data);
+        char ReadChar(char *data);
 
-        void RequestDone();
+        //void WriteDone();
+
+        //void ReadAvailable();
 
     private:
         Console *console;
-        Semaphore *semaphore;
-        Lock *lock;        
+        Semaphore *readSemaphore;
+        Semaphore *writeSemaphore;
+        Lock *readLock;    
+        Lock *writeLock;    
 
 }
 
