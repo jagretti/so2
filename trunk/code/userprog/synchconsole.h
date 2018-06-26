@@ -12,7 +12,6 @@
 
 // La clase provee una abstraccion de
 // accesso sincronizado a la consola
-
 class SynchConsole {
     public:
         SynchConsole(const char *name);
@@ -22,10 +21,6 @@ class SynchConsole {
         void WriteChar(char *data);
 
         char ReadChar(char *data);
-
-        //void WriteDone();
-
-        //void ReadAvailable();
 
     private:
         Console *console;
