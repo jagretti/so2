@@ -128,9 +128,10 @@ ExceptionHandler(ExceptionType which)
                 char *buff = new char[size];
                 readBuffFromUsr(machine->ReadRegister(4), buff, size);
                 OpenFile *f = currentThread->GetFile(fd);
-                if (f == NULL)
+                if (f == NULL) {
                     incrementarPC();
 					break;
+                }
                 DEBUG('a', "Escribo en archivo %d\n", fd);
                 f->Write(buff, size);
                 delete []buff;
