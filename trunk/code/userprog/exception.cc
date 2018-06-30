@@ -113,45 +113,82 @@ ExceptionHandler(ExceptionType which)
                 int arg = machine->ReadRegister(4);
                 char name[128];
                 readStrFromUser(arg, name);
-                if (fileSystem->Create(name,0))
+                if (fileSystem->Create(name,0)) {
                     DEBUG('a', "Se creo el archivo %s correctamente\n", name);
-                else
+                    machine->WriteRegister(2, 1);
+                }
+                else {
                     DEBUG('a', "Error creando el archivo %s \n", name);
+                    machine->WriteRegister(2, -1);
+                }
                 incrementarPC();
                 break;
             }
             case SC_Write:{
                 int fd = machine->ReadRegister(6);
-                ASSERT(fd != 0); //stdin DEVOLVER ERROR
-                //ver que pasa si es 1
                 int size = machine->ReadRegister(5);
                 char *buff = new char[size];
-                readBuffFromUsr(machine->ReadRegister(4), buff, size);
-                OpenFile *f = currentThread->GetFile(fd);
-                if (f == NULL) {
+                int write = -1;
+                if (fd != 0) { // Error - no se puede escribir en stdin
+                    machine->WriteRegister(2, write);
                     incrementarPC();
-					break;
+                    break;
+                } else {
+                    if (fd == 1) { // Escribe en stdout
+                        sconsole = machine->sconsole;
+                        readBuffFromUsr(machine->ReadRegister(4), buff, size);
+                        for(unsigned i = 0; i < size; i++) {
+                            sconsole->WriteChar(buff[i]);
+                        }
+                        write = size - 1
+                    } else {
+                        OpenFile *f = currentThread->GetFile(fd);
+                        if (f == NULL) {
+                            DEBUG('a', "El archivo %d no esta abierto", fd);
+                            machine->WriteRegister(2, write);
+                            incrementarPC();
+					        break;
+                        }
+                        DEBUG('a', "Escribo en archivo %d\n", fd);
+                        write = f->Write((const char*)buff, size);
+                    }
                 }
-                DEBUG('a', "Escribo en archivo %d\n", fd);
-                f->Write(buff, size);
+                machine->WriteRegister(2, write);
                 delete []buff;
                 incrementarPC();
                 break;
             }
             case SC_Read:{
 				int fd = machine->ReadRegister(6);
-				ASSERT(fd != 0); //stdin
-				//ver si es 1 (stdout)
 				int size = machine->ReadRegister(5);
 				char *buff = new char[size];
-				OpenFile *f = currentThread->GetFile(fd);
-				if (f == NULL) {
-					incrementarPC();
-					break;
-				}
-				int r = f->Read(buff, size);
-				writeBuffToUsr(buff, machine->ReadRegister(4),r);
-				machine->WriteRegister(2,r);
+                int read = -1;
+                if (fd == 1) {
+                    machine->WriteRegister(2, read);
+                    incrementarPC();
+                    break;
+                } else {
+                    if (fd == 0) {
+                        char c;
+                        sconsole = machine->sconsole;
+                        for(unsigned i = 0; i < size; i++) {
+                            c = sconsole->ReadChar();
+                            buff[i] = c;
+                        }
+				        writeBuffToUsr(buff, machine->ReadRegister(4), size);
+                        read = size - 1;
+                    } else {
+				        OpenFile *f = currentThread->GetFile(fd);
+				        if (f == NULL) {
+                            machine->WriteRegister(2, read);
+					        incrementarPC();
+					        break;
+				        }
+				        read = f->Read(buff, size);
+				        writeBuffToUsr(buff, machine->ReadRegister(4),read);
+                    }
+                }
+				machine->WriteRegister(2,read);
                 DEBUG('a', "Leo en archivo %d\n", fd);
 				incrementarPC();
                 break;
