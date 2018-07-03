@@ -135,12 +135,11 @@ ExceptionHandler(ExceptionType which)
                     break;
                 } else {
                     if (fd == 1) { // Escribe en stdout
-                        sconsole = machine->sconsole;
                         readBuffFromUsr(machine->ReadRegister(4), buff, size);
                         for(unsigned i = 0; i < size; i++) {
                             sconsole->WriteChar(buff[i]);
                         }
-                        write = size - 1
+                        write = size - 1;
                     } else {
                         OpenFile *f = currentThread->GetFile(fd);
                         if (f == NULL) {
@@ -170,7 +169,6 @@ ExceptionHandler(ExceptionType which)
                 } else {
                     if (fd == 0) {
                         char c;
-                        sconsole = machine->sconsole;
                         for(unsigned i = 0; i < size; i++) {
                             c = sconsole->ReadChar();
                             buff[i] = c;

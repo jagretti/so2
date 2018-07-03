@@ -181,7 +181,7 @@ Initialize(int argc, char **argv)
 #ifdef USER_PROGRAM
     machine = new Machine(debugUserProg);	// this must come first
     bitmap = new BitMap(NumPhysPages); // Corresponde a las paginas fisicas del sistema
-    sconsole = new SynchConsole(nullptr, nullptr); // Consola sincrona
+    sconsole = new SynchConsole(NULL, NULL); // Consola sincrona
 #endif
 
 #ifdef FILESYS

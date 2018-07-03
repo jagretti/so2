@@ -14,13 +14,13 @@
 // accesso sincronizado a la consola
 class SynchConsole {
     public:
-        SynchConsole(const char *name);
+        SynchConsole(const char* readFile, const char* writeFile);
 
         ~SynchConsole();
 
-        void WriteChar(char *data);
+        void WriteChar(char data);
 
-        char ReadChar(char *data);
+        char ReadChar();
 
     private:
         Console *console;
@@ -29,6 +29,6 @@ class SynchConsole {
         Lock *readLock;    
         Lock *writeLock;    
 
-}
+};
 
 #endif //SYNCHCONSOLE_H
