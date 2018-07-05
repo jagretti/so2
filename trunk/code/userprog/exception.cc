@@ -208,6 +208,9 @@ ExceptionHandler(ExceptionType which)
 			}
             case SC_Close:{
 				int fd = machine->ReadRegister(4);
+                if (fd == NULL) {
+                    DEBUG('a', "Hubo un error cerrando un archivo");
+                }
 				currentThread->CloseFile(fd);
                 DEBUG('a', "Se cerro archivo con fd %d", fd);
 				incrementarPC();

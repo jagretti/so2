@@ -7,44 +7,53 @@
 #include "synchconsole.h"
 
 //----------------------------------------------------------------------
-// callback de WriteDone
+// Funciones que llaman a los metodos internos de la clase
 //----------------------------------------------------------------------
-static void ConsoleWriteDone(void* arg)
+static void CallConsoleReadAvailable(void *arg)
 {
     SynchConsole* console = (SynchConsole*) arg;
 
-    console->writeSemaphore->V();
+    console->ConsoleReadAvailable(console);
 }
 
-//----------------------------------------------------------------------
-// callback de ReadAvailable
-//----------------------------------------------------------------------
-static void ConsoleReadAvailable(void *arg)
+static void CallConsoleWriteDone(void* arg)
 {
     SynchConsole* console = (SynchConsole*) arg;
 
-    console->readSemaphore->V();
+    console->ConsoleWriteDone(console);
 }
+//----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
 //Constructor
 //----------------------------------------------------------------------
 SynchConsole::SynchConsole(const char* read_file, const char* write_file)
 {
-    console = new Console(read_file, write_file, ConsoleReadAvailable,
-                    ConsoleWriteDone, this);
     readLock = new Lock("SynchConsole Read Lock");
     writeLock = new Lock("SynchConsole Write Lock");
     readSemaphore = new Semaphore("SynchConsole Read Semaphore", 0);
     writeSemaphore = new Semaphore("SynchConsole Write Semaphore", 0);
+    console = new Console(read_file, write_file, CallConsoleReadAvailable, CallConsoleWriteDone, NULL);
 }
+
+//----------------------------------------------------------------------
+// Destructor
+//----------------------------------------------------------------------
+SynchConsole::~SynchConsole()
+{
+    delete console;
+    delete readLock;
+    delete readSemaphore;
+    delete writeSemaphore;
+}
+
 
 //----------------------------------------------------------------------
 // WriteChar
 // Lockeo al escribir, y veo que se termine de escribir para
 // terminar
 //----------------------------------------------------------------------
-void WriteChar(char c):
+void SynchConsole::WriteChar(char c)
 {
     writeLock->Acquire();
     console->PutChar(c);
@@ -56,7 +65,7 @@ void WriteChar(char c):
 // ReadChar
 // Veo que se termine de leer para retornar
 //----------------------------------------------------------------------
-char ReadChar()
+char SynchConsole::ReadChar()
 {
     readLock->Acquire();
     char c = console->GetChar();
@@ -64,4 +73,25 @@ char ReadChar()
     readLock->Release();
     return c;
 }
+
+//----------------------------------------------------------------------
+// callback de WriteDone
+//----------------------------------------------------------------------
+void SynchConsole::ConsoleWriteDone(void* arg)
+{
+    SynchConsole* sconsole = (SynchConsole*) arg;
+
+    sconsole->writeSemaphore->V();
+}
+
+//----------------------------------------------------------------------
+// callback de ReadAvailable
+//----------------------------------------------------------------------
+void SynchConsole::ConsoleReadAvailable(void *arg)
+{
+    SynchConsole* sconsole = (SynchConsole*) arg;
+
+    sconsole->readSemaphore->V();
+}
+
 

@@ -22,6 +22,10 @@ class SynchConsole {
 
         char ReadChar();
 
+        void ConsoleWriteDone(void*);
+
+        void ConsoleReadAvailable(void*);
+
     private:
         Console *console;
         Semaphore *readSemaphore;
