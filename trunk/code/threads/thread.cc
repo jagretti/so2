@@ -51,7 +51,7 @@ Thread::Thread(const char* threadName, int p, bool join)
     for(int i = 0; i < MAX_FILES; i++)
 		files[i] = NULL;
 		
-	int exitS = 0;
+	exitS = 0;
 #endif
 }
 

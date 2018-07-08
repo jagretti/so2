@@ -34,7 +34,7 @@ extern Timer *timer;				// the hardware alarm clock
 #include "machine.h"
 #include "bitmap.h"
 extern Machine* machine;	// user program memory and registers
-extern BitMap* bitmap;
+extern BitMap* pages;
 extern SynchConsole* sconsole;
 #endif
 

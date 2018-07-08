@@ -34,7 +34,7 @@ SynchDisk   *synchDisk;
 
 #ifdef USER_PROGRAM	// requires either FILESYS or FILESYS_STUB
 Machine *machine;	// user program memory and registers
-BitMap *bitmap;
+BitMap *pages;
 SynchConsole *sconsole;
 #endif
 
@@ -180,7 +180,7 @@ Initialize(int argc, char **argv)
     
 #ifdef USER_PROGRAM
     machine = new Machine(debugUserProg);	// this must come first
-    bitmap = new BitMap(NumPhysPages); // Corresponde a las paginas fisicas del sistema
+    pages = new BitMap(NumPhysPages); // Corresponde a las paginas fisicas del sistema
     sconsole = new SynchConsole(NULL, NULL); // Consola sincrona
 #endif
 
@@ -216,7 +216,7 @@ Cleanup()
     
 #ifdef USER_PROGRAM
     delete machine;
-    delete bitmap;
+    delete pages;
 #endif
 
 #ifdef FILESYS_NEEDED

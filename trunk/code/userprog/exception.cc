@@ -197,10 +197,10 @@ ExceptionHandler(ExceptionType which)
 				OpenFile *f = fileSystem->Open(name);
 				if (f == NULL) {
                     DEBUG('a', "Archivo con nombre %s vacio\n", name);
-					machine->WriteRegister(2,-1);
+					machine->WriteRegister(2, -1);
 				} else {
 					int fd = currentThread->AddFile(f);
-					machine->WriteRegister(2,fd);
+					machine->WriteRegister(2, fd);
                     DEBUG('a', "Se abrio archivo con nombre %s y fd %d\n", name, fd);
 				}
 				incrementarPC();
@@ -210,9 +210,11 @@ ExceptionHandler(ExceptionType which)
 				int fd = machine->ReadRegister(4);
                 if (fd == NULL) {
                     DEBUG('a', "Hubo un error cerrando un archivo");
+                    machine->WriteRegister(2, -1);
+                } else {
+				    currentThread->CloseFile(fd);
+                    DEBUG('a', "Se cerro archivo con fd %d", fd);
                 }
-				currentThread->CloseFile(fd);
-                DEBUG('a', "Se cerro archivo con fd %d", fd);
 				incrementarPC();
                 break;
 			}
