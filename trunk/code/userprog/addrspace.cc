@@ -83,7 +83,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     // Chequeo que la cantidad de paginas necesarias
     // no superen a las paginas fisicas que quedan libres
     // HACE FALTA?
-    ASSERT(numPages <= pages->NumClear()); 
+    //ASSERT(numPages <= pages->NumClear()); 
 
     DEBUG('a', "Initializing address space, num pages %d, size %d\n", 
 					numPages, size);
@@ -98,9 +98,10 @@ AddrSpace::AddrSpace(OpenFile *executable)
 	    pageTable[i].valid = true;
 	    pageTable[i].use = false;
 	    pageTable[i].dirty = false;
-	    pageTable[i].readOnly = false;  // if the code segment was entirely on 
-		    			// a separate page, we could set its 
-			    		// pages to be read-only
+	    pageTable[i].readOnly = false;  
+        // if the code segment was entirely on 
+		// a separate page, we could set its 
+		// pages to be read-only
     }
     
     // zero out the entire address space, to zero the unitialized data segment 
@@ -109,18 +110,18 @@ AddrSpace::AddrSpace(OpenFile *executable)
     
     // Uso memset para poner en cero todo el espacio de 
     // direcciones
-    DEBUG('a', "Pongo 0s en todo el espacio de direcciones\n")
-    for (int i = 0; i < numPages; i++) {
+    DEBUG('a', "Pongo 0s en todo el espacio de direcciones\n");
+    for (i = 0; i < numPages; i++) {
         memset(&(machine->mainMemory[pageTable[i].physicalPage * PageSize]), 0, PageSize); 
     }
 
-    
+    int j; 
     // Copiar los segmentos de codigo y de datos en memoria
     if (noffH.code.size > 0) {
-        for (int i  = 0; i < noffH.code.size; i++) {
+        for (j  = 0; j < noffH.code.size; j++) {
             char byte;
-            executable->ReadAt(&byte, 1, noffH.code.inFileAddr);
-            int virtualAddr = noffH.code.virtualAddr + i;
+            executable->ReadAt(&(byte), 1, j + noffH.code.inFileAddr);
+            int virtualAddr = noffH.code.virtualAddr + j;
             int virtualPageNum = virtualAddr / PageSize;
             int offset = virtualAddr % PageSize;
             int physicalPage = pageTable[virtualPageNum].physicalPage * PageSize;
@@ -129,10 +130,10 @@ AddrSpace::AddrSpace(OpenFile *executable)
     }
 
     if (noffH.initData.size > 0) {
-        for (int i = 0; i < noffH.initData.size; i++) {
+        for (j = 0; j < noffH.initData.size; j++) {
             char byte;
-            executable->ReadAt(byte, 1, noffH.initData.InFileAddr);
-            int virtualAddr = noffH.initData.virtualAddr + i;
+            executable->ReadAt(&(byte), 1, j + noffH.initData.inFileAddr);
+            int virtualAddr = noffH.initData.virtualAddr + j;
             int virtualPageNum = virtualAddr / PageSize;
             int offset = virtualAddr % PageSize;
             int physicalPage = pageTable[virtualPageNum].physicalPage * PageSize;
@@ -163,7 +164,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 AddrSpace::~AddrSpace()
 { 
     DEBUG('a', "Limpiando espacio de direcciones\n");
-    for (int i = 0; i < numPages; i++) {
+    for (unsigned i = 0; i < numPages; i++) {
         pages->Clear(pageTable[i].physicalPage);
     }
     delete pageTable;
