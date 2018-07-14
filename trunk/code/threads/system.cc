@@ -36,7 +36,7 @@ SynchDisk   *synchDisk;
 Machine *machine;	// user program memory and registers
 BitMap *pages;
 SynchConsole *sconsole;
-Threads **procTable;
+Thread **procTable;
 #endif
 
 #ifdef NETWORK
@@ -183,7 +183,7 @@ Initialize(int argc, char **argv)
     machine = new Machine(debugUserProg);	// this must come first
     pages = new BitMap(NumPhysPages); // Corresponde a las paginas fisicas del sistema
     sconsole = new SynchConsole(NULL, NULL); // Consola sincrona
-    procTable = new (Threads*)[MAX_PROC]; // MAX_PROC es el maximo de threads que puede haber
+    procTable = new Thread*[MAX_PROC]; // MAX_PROC es el maximo de threads que puede haber
 #endif
 
 #ifdef FILESYS

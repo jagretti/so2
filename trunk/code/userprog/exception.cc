@@ -72,7 +72,7 @@ void writeBuffToUsr(char *str, int usrAddr, int byteCount)
 // Funcion que incrementa el Program Counter
 //---------------------------------------------------------------------
 void
-incrementarPC() ///sacado de https://users.cs.duke.edu/~narten/110/nachos/main/node33.html#SECTION00073000000000000000
+incrementarPC() 
 {
     int pc = machine->ReadRegister(PCReg);
     machine->WriteRegister(PrevPCReg,pc);
@@ -85,16 +85,23 @@ incrementarPC() ///sacado de https://users.cs.duke.edu/~narten/110/nachos/main/n
 //---------------------------------------------------------------------
 // Funciones que trabajan sobre la procTable
 //---------------------------------------------------------------------
-SpaceId getNextId(Threads *t) 
+SpaceId getNextId(Thread *t) 
 {
-        
+    for(int i = 0; i < MAX_PROC; i++) {
+        if (procTable[i] == NULL) {
+            procTable[i] = t;
+            return i;
+        }
+    }        
+    return -1;
 }
 
 void freeId(SpaceId id)
 {
-
+    if (id < MAX_PROC and id > 0) {
+        procTable[id] = NULL;
+    }
 }
-
 //---------------------------------------------------------------------
 
 //----------------------------------------------------------------------
@@ -246,10 +253,10 @@ ExceptionHandler(ExceptionType which)
 				currentThread->Finish();
 				break;
             }
-            case SC_Join:
+            case SC_Join:{
                 break;
-        
-            case SC_Exec:
+            }
+            case SC_Exec:{
 				char *path;
 				readStrFromUser(machine->ReadRegister(4), path);
 				OpenFile *b = fileSystem->Open(path);
@@ -257,6 +264,7 @@ ExceptionHandler(ExceptionType which)
 					break;
 				AddrSpace *addr = new AddrSpace(b);
                 break;
+            }
         }
     } else {
 	printf("Unexpected user mode exception %d %d\n", which, type);
