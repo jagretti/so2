@@ -8,6 +8,8 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
+#define MAX_PROC    100
+
 #include "copyright.h"
 #include "utility.h"
 #include "thread.h"
@@ -34,8 +36,9 @@ extern Timer *timer;				// the hardware alarm clock
 #include "machine.h"
 #include "bitmap.h"
 extern Machine* machine;	// user program memory and registers
-extern BitMap* pages;
-extern SynchConsole* sconsole;
+extern BitMap* pages;   // Paginas virtuales a fisicas 
+extern SynchConsole* sconsole;  // Consola sincrona
+extern Threads **procTable // SpaceId de los procesos
 #endif
 
 #ifdef FILESYS_NEEDED 		// FILESYS or FILESYS_STUB 

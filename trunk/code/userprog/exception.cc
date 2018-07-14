@@ -27,6 +27,9 @@
 
 //Ejercicio 1
 
+//---------------------------------------------------------------------
+// Funciones que leen y escriben en el espacio de usuario
+//---------------------------------------------------------------------
 void readStrFromUser(int usrAddr, char *outStr)
 {
     int i = 0, c;
@@ -63,7 +66,11 @@ void writeBuffToUsr(char *str, int usrAddr, int byteCount)
         i++;
     }
 }
+//---------------------------------------------------------------------
 
+//---------------------------------------------------------------------
+// Funcion que incrementa el Program Counter
+//---------------------------------------------------------------------
 void
 incrementarPC() ///sacado de https://users.cs.duke.edu/~narten/110/nachos/main/node33.html#SECTION00073000000000000000
 {
@@ -74,6 +81,21 @@ incrementarPC() ///sacado de https://users.cs.duke.edu/~narten/110/nachos/main/n
     pc += 4;
     machine->WriteRegister(NextPCReg,pc);
 }
+
+//---------------------------------------------------------------------
+// Funciones que trabajan sobre la procTable
+//---------------------------------------------------------------------
+SpaceId getNextId(Threads *t) 
+{
+        
+}
+
+void freeId(SpaceId id)
+{
+
+}
+
+//---------------------------------------------------------------------
 
 //----------------------------------------------------------------------
 // ExceptionHandler
@@ -136,7 +158,7 @@ ExceptionHandler(ExceptionType which)
                 } else {
                     if (fd == 1) { // Escribe en stdout
                         readBuffFromUsr(machine->ReadRegister(4), buff, size);
-                        for(unsigned i = 0; i < size; i++) {
+                        for(int i = 0; i < size; i++) {
                             sconsole->WriteChar(buff[i]);
                         }
                         write = size - 1;
@@ -169,7 +191,7 @@ ExceptionHandler(ExceptionType which)
                 } else {
                     if (fd == 0) {
                         char c;
-                        for(unsigned i = 0; i < size; i++) {
+                        for(int i = 0; i < size; i++) {
                             c = sconsole->ReadChar();
                             buff[i] = c;
                         }
