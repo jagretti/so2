@@ -24,19 +24,21 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
+#include "args.cc"
 
 //Ejercicio 1
 
 //---------------------------------------------------------------------
 // Funciones que leen y escriben en el espacio de usuario
 //---------------------------------------------------------------------
-void readStrFromUser(int usrAddr, char *outStr)
+void readStrFromUser(int usrAddr, char *outStr, unsigned byteCount)
 {
     int i = 0, c;
     do {
         ASSERT(machine->ReadMem(usrAddr+i,1,&c));
         outStr[i++] = c;
-    } while (c != 0);
+        byteCount--;
+    } while (c != 0 and byteCount > 0);
 }
 
 void readBuffFromUsr(int usrAddr, char *outBuff, int byteCount) 
@@ -104,6 +106,19 @@ void freeId(SpaceId id)
 }
 //---------------------------------------------------------------------
 
+//---------------------------------------------------------------------
+// Funcion a forkear en un nuevo thread, inicia los registros en el espacio
+// de direcciones y escribe los argumentos de lo que se ejecuta
+//---------------------------------------------------------------------
+void beginProcess(void *args)
+{
+    currentThread->space->InitRegisters();
+    currentThread->space->RestoreState();
+    WriteArgs((char **) args);
+    machine->Run();
+}
+//---------------------------------------------------------------------
+
 //----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
@@ -141,7 +156,7 @@ ExceptionHandler(ExceptionType which)
             case SC_Create:{
                 int arg = machine->ReadRegister(4);
                 char name[128];
-                readStrFromUser(arg, name);
+                readStrFromUser(arg, name, 128);
                 if (fileSystem->Create(name,0)) {
                     DEBUG('a', "Se creo el archivo %s correctamente\n", name);
                     machine->WriteRegister(2, 1);
@@ -222,7 +237,7 @@ ExceptionHandler(ExceptionType which)
 			}
             case SC_Open:{
 				char name[128];
-				readStrFromUser(machine->ReadRegister(4),name);
+				readStrFromUser(machine->ReadRegister(4),name, 128);
 				OpenFile *f = fileSystem->Open(name);
 				if (f == NULL) {
                     DEBUG('a', "Archivo con nombre %s vacio\n", name);
@@ -257,12 +272,21 @@ ExceptionHandler(ExceptionType which)
                 break;
             }
             case SC_Exec:{
-				char *path;
-				readStrFromUser(machine->ReadRegister(4), path);
-				OpenFile *b = fileSystem->Open(path);
-				if (b == NULL)
+				char path[128];
+                int name_addr = machine->ReadRegister(4);
+                int args_addr = machine->ReadRegister(5);
+				readStrFromUser(name_addr, path, 128);
+				OpenFile *executable = fileSystem->Open(path);
+				if (executable == NULL)
 					break;
-				AddrSpace *addr = new AddrSpace(b);
+                Thread *t = new Thread(path, 0, true);
+				AddrSpace *addr = new AddrSpace(executable);
+                t->space = addr;
+                id = getNextId(t);
+                char **args = SaveArgs(args_addr);
+                t->Fork(beginProcess, args);
+                machine->WriteRegister(2, id);
+                incrementarPC();
                 break;
             }
         }
