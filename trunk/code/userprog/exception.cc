@@ -282,7 +282,7 @@ ExceptionHandler(ExceptionType which)
                 Thread *t = new Thread(path, 0, true);
 				AddrSpace *addr = new AddrSpace(executable);
                 t->space = addr;
-                id = getNextId(t);
+                int id = getNextId(t);
                 char **args = SaveArgs(args_addr);
                 t->Fork(beginProcess, args);
                 machine->WriteRegister(2, id);

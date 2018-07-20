@@ -582,7 +582,7 @@ exception.o: ../userprog/exception.cc /usr/include/stdc-predef.h \
  ../machine/stats.h ../machine/timer.h \
  ../threads/../userprog/synchconsole.h ../machine/console.h \
  ../threads/synch.h ../userprog/bitmap.h ../filesys/openfile.h \
- ../userprog/syscall.h
+ ../userprog/syscall.h ../userprog/args.cc
 progtest.o: ../userprog/progtest.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../threads/system.h ../threads/copyright.h \
  ../threads/utility.h ../machine/sysdep.h /usr/include/stdlib.h \

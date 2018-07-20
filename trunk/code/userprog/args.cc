@@ -1,12 +1,12 @@
-#include "machine/machine.hh"
-
+#include "machine.h"
+#include "system.h"
 
 const unsigned MAX_ARG_COUNT  = 32;
 const unsigned MAX_ARG_LENGTH = 128;
 
-void ReadStringFromUser(int userAddress, char *outString,
+void readStrFromUser(int userAddress, char *outString,
                         unsigned maxByteCount);
-void WriteStringToUser(const char *string, int userAddress);
+void writeStrToUsr(char *string, int userAddress);
 
 void
 WriteArgs(char **args)
@@ -18,12 +18,12 @@ WriteArgs(char **args)
     // Start writing the arguments where the current SP points.
     int args_address[MAX_ARG_COUNT];
     unsigned i;
-    int sp = machine->ReadRegister(STACK_REG);
+    int sp = machine->ReadRegister(StackReg);
     for (i = 0; i < MAX_ARG_COUNT; i++) {
         if (args[i] == NULL)        // If the last was reached, terminate.
             break;
         sp -= strlen(args[i]) + 1;  // Decrease SP (leave one byte for \0).
-        WriteStringToUser(args[i], sp);  // Write the string there.
+        writeStrToUsr(args[i], sp);  // Write the string there.
         args_address[i] = sp;       // Save the argument's address.
         delete args[i];             // Free the memory.
     }
@@ -41,7 +41,7 @@ WriteArgs(char **args)
     machine->WriteMem(sp + 4 * i, 4, 0);  // The last is NULL.
     sp -= 16;  // Make room for the “register saves”.
 
-    machine->WriteRegister(STACK_REG, sp);
+    machine->WriteRegister(StackReg, sp);
     delete args;  // Free the array.
 }
 
@@ -70,7 +70,7 @@ SaveArgs(int address)
         // For each pointer, read the corresponding string.
         ret[j] = new char [MAX_ARG_LENGTH];
         machine->ReadMem(address + j * 4, 4, &val);
-        ReadStringFromUser(val, ret[j], MAX_ARG_LENGTH);
+        readStrFromUser(val, ret[j], MAX_ARG_LENGTH);
     }
     ret[i - 1] = NULL;  // Write the trailing NULL.
 
