@@ -38,7 +38,9 @@ void readStrFromUser(int usrAddr, char *outStr, unsigned byteCount)
         ASSERT(machine->ReadMem(usrAddr+i,1,&c));
         outStr[i++] = c;
         byteCount--;
-    } while (c != 0 and byteCount > 0);
+    } while (c != '\0' and i < byteCount - 1);
+    // Agrego a mano el EOF
+    outStr[i] = '\0';
 }
 
 void readBuffFromUsr(int usrAddr, char *outBuff, int byteCount) 
@@ -173,7 +175,7 @@ ExceptionHandler(ExceptionType which)
                 int size = machine->ReadRegister(5);
                 char *buff = new char[size];
                 int write = -1;
-                if (fd != 0) { // Error - no se puede escribir en stdin
+                if (fd == 0) { // Error - no se puede escribir en stdin
                     machine->WriteRegister(2, write);
                     incrementarPC();
                     break;
@@ -269,6 +271,11 @@ ExceptionHandler(ExceptionType which)
 				break;
             }
             case SC_Join:{
+                int id = machine->ReadRegister(4);
+                Thread *t = procTable[id];
+                t->Join();
+                machine->WriteRegister(2, 0);
+                incrementarPC();
                 break;
             }
             case SC_Exec:{

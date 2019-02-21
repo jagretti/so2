@@ -24,6 +24,7 @@ static void CallConsoleWriteDone(void* arg)
 }
 //----------------------------------------------------------------------
 
+
 //----------------------------------------------------------------------
 //Constructor
 //----------------------------------------------------------------------
@@ -33,7 +34,7 @@ SynchConsole::SynchConsole(const char* read_file, const char* write_file)
     writeLock = new Lock("SynchConsole Write Lock");
     readSemaphore = new Semaphore("SynchConsole Read Semaphore", 0);
     writeSemaphore = new Semaphore("SynchConsole Write Semaphore", 0);
-    console = new Console(read_file, write_file, CallConsoleReadAvailable, CallConsoleWriteDone, NULL);
+    console = new Console(read_file, write_file, CallConsoleReadAvailable, CallConsoleWriteDone, this);
 }
 
 //----------------------------------------------------------------------

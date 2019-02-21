@@ -83,7 +83,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     // Chequeo que la cantidad de paginas necesarias
     // no superen a las paginas fisicas que quedan libres
     // HACE FALTA?
-    //ASSERT(numPages <= pages->NumClear()); 
+    ASSERT(numPages <= pages->NumClear()); 
 
     DEBUG('a', "Initializing address space, num pages %d, size %d\n", 
 					numPages, size);
