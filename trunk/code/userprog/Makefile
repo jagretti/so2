@@ -1017,8 +1017,8 @@ exception.o: ../userprog/exception.cc /usr/include/stdc-predef.h \
  ../threads/synch.h ../userprog/bitmap.h ../filesys/openfile.h \
  ../userprog/syscall.h ../userprog/args.cc
 progtest.o: ../userprog/progtest.cc /usr/include/stdc-predef.h \
- ../threads/copyright.h ../threads/system.h ../threads/copyright.h \
- ../threads/utility.h ../machine/sysdep.h /usr/include/c++/7/stdlib.h \
+ ../threads/system.h ../threads/copyright.h ../threads/utility.h \
+ ../machine/sysdep.h ../threads/copyright.h /usr/include/c++/7/stdlib.h \
  /usr/include/c++/7/cstdlib \
  /usr/include/x86_64-linux-gnu/c++/7/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/7/bits/os_defines.h \

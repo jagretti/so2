@@ -1,7 +1,7 @@
 // synchconsole.h
 // Rutinas para acceder de manera sincrona a la consola
 // La consola es un dispositivo asincrono, esta clase
-// provee una interfaz de accesi sincrono
+// provee una interfaz de acceso sincrono
 // José Francisco Agretti
 
 #ifndef SYNCHCONSOLE_H

@@ -1,4 +1,4 @@
-// progtest.cc 
+
 //	Test routines for demonstrating that Nachos can load
 //	a user program and execute it.  
 //
@@ -8,7 +8,7 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
-#include "copyright.h"
+//#include "copyright.h"
 #include "system.h"
 #include "console.h"
 #include "addrspace.h"
@@ -75,10 +75,10 @@ ConsoleTest (const char *in, const char *out)
     writeDone = new Semaphore("write done", 0);
     
     for (;;) {
-	readAvail->P();		// wait for character to arrive
-	ch = console->GetChar();
-	console->PutChar(ch);	// echo it!
-	writeDone->P() ;        // wait for write to finish
-	if (ch == 'q') return;  // if q, quit
+	    readAvail->P();		// wait for character to arrive
+	    ch = console->GetChar();
+	    console->PutChar(ch);	// echo it!
+	    writeDone->P() ;        // wait for write to finish
+	    if (ch == 'q') return;  // if q, quit
     }
 }

@@ -70,9 +70,9 @@ AddrSpace::AddrSpace(OpenFile *executable)
     ASSERT(noffH.noffMagic == NOFFMAGIC);
 
     // how big is address space?
-    size = noffH.code.size + noffH.initData.size + noffH.uninitData.size 
-			+ UserStackSize;	// we need to increase the size
-						// to leave room for the stack
+    // we need to increase the size
+    // to leave room for the stack
+    size = noffH.code.size + noffH.initData.size + noffH.uninitData.size + UserStackSize;	
     numPages = divRoundUp(size, PageSize);
     size = numPages * PageSize;
 	//cambiar para ver cuantos bits libres hay en realidad
