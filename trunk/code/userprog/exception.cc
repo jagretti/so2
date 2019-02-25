@@ -37,7 +37,6 @@ void readStrFromUser(int usrAddr, char *outStr, unsigned byteCount)
     do {
         ASSERT(machine->ReadMem(usrAddr+i,1,&c));
         outStr[i++] = c;
-        byteCount--;
     } while (c != '\0' and i < byteCount - 1);
     // Agrego a mano el EOF
     outStr[i] = '\0';
@@ -157,7 +156,7 @@ ExceptionHandler(ExceptionType which)
             }
             case SC_Create:{
                 int arg = machine->ReadRegister(4);
-                char name[128];
+                char *name = new char[128];
                 readStrFromUser(arg, name, 128);
                 if (fileSystem->Create(name,0)) {
                     DEBUG('a', "Se creo el archivo %s correctamente\n", name);
@@ -167,6 +166,7 @@ ExceptionHandler(ExceptionType which)
                     DEBUG('a', "Error creando el archivo %s \n", name);
                     machine->WriteRegister(2, -1);
                 }
+                delete []name;
                 incrementarPC();
                 break;
             }
@@ -194,6 +194,9 @@ ExceptionHandler(ExceptionType which)
                             incrementarPC();
 					        break;
                         }
+                        // Leo del espacio de usuario el string a escribir
+                        int arg = machine->ReadRegister(4);
+                        readStrFromUser(arg, buff, size);
                         DEBUG('a', "Escribo en archivo %d\n", fd);
                         write = f->Write((const char*)buff, size);
                     }
@@ -208,12 +211,12 @@ ExceptionHandler(ExceptionType which)
 				int size = machine->ReadRegister(5);
 				char *buff = new char[size];
                 int read = -1;
-                if (fd == 1) {
+                if (fd == 1) { //stdout
                     machine->WriteRegister(2, read);
                     incrementarPC();
                     break;
                 } else {
-                    if (fd == 0) {
+                    if (fd == 0) { //stdin
                         char c;
                         for(int i = 0; i < size; i++) {
                             c = sconsole->ReadChar();
@@ -235,10 +238,11 @@ ExceptionHandler(ExceptionType which)
 				machine->WriteRegister(2,read);
                 DEBUG('a', "Leo en archivo %d\n", fd);
 				incrementarPC();
+                delete []buff;
                 break;
 			}
             case SC_Open:{
-				char name[128];
+				char *name = new char[128];
 				readStrFromUser(machine->ReadRegister(4),name, 128);
 				OpenFile *f = fileSystem->Open(name);
 				if (f == NULL) {
@@ -250,6 +254,7 @@ ExceptionHandler(ExceptionType which)
                     DEBUG('a', "Se abrio archivo con nombre %s y fd %d\n", name, fd);
 				}
 				incrementarPC();
+                delete []name;
                 break;
 			}
             case SC_Close:{
@@ -279,7 +284,7 @@ ExceptionHandler(ExceptionType which)
                 break;
             }
             case SC_Exec:{
-				char path[128];
+				char *path = new char[128];
                 int name_addr = machine->ReadRegister(4);
                 int args_addr = machine->ReadRegister(5);
 				readStrFromUser(name_addr, path, 128);
@@ -294,6 +299,7 @@ ExceptionHandler(ExceptionType which)
                 t->Fork(beginProcess, args);
                 machine->WriteRegister(2, id);
                 incrementarPC();
+                delete []path;
                 break;
             }
         }

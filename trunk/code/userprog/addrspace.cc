@@ -90,10 +90,10 @@ AddrSpace::AddrSpace(OpenFile *executable)
     // first, set up the translation 
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
-	    pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
+	    pageTable[i].virtualPage = i;	
+        // for now, virtual page # = phys page #
 	    //pageTable[i].physicalPage = i; //bitmap->Find()
-        // Busco la primer pagina fisica libre
-        // que haya
+        // Busco la primer pagina fisica libre que haya
         pageTable[i].physicalPage = pages->Find();
 	    pageTable[i].valid = true;
 	    pageTable[i].use = false;
