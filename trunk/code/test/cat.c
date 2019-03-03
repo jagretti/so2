@@ -1,15 +1,20 @@
+
 #include "syscall.h"
 
 int main(int argc, char** argv)
 {
-  if (argc < 1) Exit(1); // without arg nothing to do.
+  if (argc < 1) Exit(1);
   OpenFileId output = ConsoleOutput;
-  OpenFileId inputFile = Open(argv[0]);
+  OpenFileId input =  Open(argv[0]);
   char buff[1];
-  Read(buff, 1, inputFile);
-  while (buff[0] != "\0") {
+  int read = Read(buff, 1, input);
+  while (read == 1) {
     Write(buff, 1, output);
-    Read(buff, 1, inputFile);
+    read = Read(buff, 1, input);
   }
-  Exit(0);
+  // EOF
+  buff[0] = '\0';
+  Write(buff, 1, output);
+  Close(output);
+  Close(input);
 }
