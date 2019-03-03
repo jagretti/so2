@@ -34,7 +34,7 @@ CPP = /lib/cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR) -mips1
 
-all: lib/gcc-lib halt shell matmult sort filetest cat
+all: lib/gcc-lib halt shell matmult sort filetest cat cp
 
 lib/gcc-lib:
 	ln -s `pwd`/mips-dec-ultrix42/ lib/gcc-lib
@@ -81,15 +81,19 @@ cat: cat.o start.o
 	$(LD) $(LDFLAGS) start.o cat.o -o cat.coff
 	../bin/coff2noff cat.coff cat
 
+cp.o: cp.c
+	$(CC) $(CFLAGS) -c cp.c
+cp: cp.o start.o
+	$(LD) $(LDFLAGS) start.o cp.o -o cp.coff
+	../bin/coff2noff cp.coff cp
+
 # Estas reglas sirven para compilar programas simples,
-# que consistan en un único fuente.
+# que consistan en un Ãºnico fuente.
 # Las reglas anteriores para construir los ejecutables
-# halt, shell, sort y filetest se podrían suprimir
+# halt, shell, sort y filetest se podrÃ­an suprimir
 
 %: %.c 
 	make start.o 
 	$(CC) $(CFLAGS) -c $<
 	$(LD) $(LDFLAGS) start.o $*.o -o $*.coff
 	../bin/coff2noff $*.coff $@
-	
-
