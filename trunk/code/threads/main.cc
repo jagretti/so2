@@ -62,6 +62,7 @@ void Print(const char *file);
 void PerformanceTest(void);
 void StartProcess(const char *file);
 void ConsoleTest(const char *in, const char *out);
+void SynchConsoleTest(const char *in, const char *out);
 void MailTest(int networkID);
 
 //----------------------------------------------------------------------
@@ -102,10 +103,10 @@ main(int argc, char **argv)
             argCount = 2;
         } else if (!strcmp(*argv, "-c")) {      // test the console
 	    if (argc == 1)
-	        ConsoleTest(NULL, NULL);
+	        SynchConsoleTest(NULL, NULL);
 	    else {
 		ASSERT(argc > 2);
-	        ConsoleTest(*(argv + 1), *(argv + 2));
+	        SynchConsoleTest(*(argv + 1), *(argv + 2));
 	        argCount = 3;
 	    }
 	    interrupt->Halt();		// once we start the console, then 

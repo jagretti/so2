@@ -82,3 +82,17 @@ ConsoleTest (const char *in, const char *out)
 	    if (ch == 'q') return;  // if q, quit
     }
 }
+
+void 
+SynchConsoleTest (const char *in, const char *out)
+{
+    char ch;
+
+    sconsole = new SynchConsole(in, out);
+    
+    for (;;) {
+	    ch = sconsole->ReadChar();
+	    sconsole->WriteChar(ch);	// echo it!
+	    if (ch == 'q') return;  // if q, quit
+    }
+}
