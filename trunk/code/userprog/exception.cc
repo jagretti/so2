@@ -177,6 +177,7 @@ ExceptionHandler(ExceptionType which)
                 if (fd == 0) { // Error - no se puede escribir en stdin
                     machine->WriteRegister(2, write);
                     incrementarPC();
+                    delete []buff;
                     break;
                 } else {
                     if (fd == 1) { // Escribe en stdout
@@ -191,6 +192,7 @@ ExceptionHandler(ExceptionType which)
                             DEBUG('a', "El archivo %d no esta abierto", fd);
                             machine->WriteRegister(2, write);
                             incrementarPC();
+                            delete []buff;
 					        break;
                         }
                         // Leo del espacio de usuario el string a escribir
@@ -214,6 +216,7 @@ ExceptionHandler(ExceptionType which)
                 if (fd == 1) { //stdout
                     machine->WriteRegister(2, read);
                     incrementarPC();
+                    delete []buff;
                     break;
                 } else {
                     if (fd == 0) { //stdin
@@ -229,6 +232,7 @@ ExceptionHandler(ExceptionType which)
 				        if (f == NULL) {
                             machine->WriteRegister(2, read);
 					        incrementarPC();
+                            delete []buff;
 					        break;
 				        }
 				        read = f->Read(buff, size);
@@ -290,9 +294,17 @@ ExceptionHandler(ExceptionType which)
 				readStrFromUser(name_addr, path, 128);
 				OpenFile *executable = fileSystem->Open(path);
 				if (executable == NULL)
+                    delete []path;
 					break;
                 Thread *t = new Thread(path, 0, true);
 				AddrSpace *addr = new AddrSpace(executable);
+                if (!addr->IsValid()) { // El espacio de direcciones no es valido!
+                    t->exitS = 0;
+                    t->Finish();
+                    delete addr;
+                    delete []path;
+                    break;
+                }
                 t->space = addr;
                 int id = getNextId(t);
                 char **args = SaveArgs(args_addr);

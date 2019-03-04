@@ -31,11 +31,14 @@ class AddrSpace {
     void SaveState();			// Save/restore address space-specific
     void RestoreState();		// info on a context switch 
 
+    bool IsValid(); // Retorna si es valido el addrspace o no
+
   private:
     TranslationEntry *pageTable;	// Assume linear page table translation
 					// for now!
     unsigned int numPages;		// Number of pages in the virtual 
 					// address space
+    bool isValid; // Es valida si alcanza la memoria para poder ejecutar el proceso
 };
 
 #endif // ADDRSPACE_H
