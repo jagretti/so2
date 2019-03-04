@@ -34,12 +34,11 @@
 void readStrFromUser(int usrAddr, char *outStr, unsigned byteCount)
 {
     int i = 0, c;
+    if (byteCount < 1) return;
     do {
         ASSERT(machine->ReadMem(usrAddr+i,1,&c));
-        outStr[i++] = c;
-    } while (c != '\0' and i < byteCount - 1);
-    // Agrego a mano el EOF
-    outStr[i] = '\0';
+        outStr[i] = c;
+    } while (outStr[i++] != '\0' && i < byteCount);
 }
 
 void readBuffFromUsr(int usrAddr, char *outBuff, int byteCount) 
@@ -197,6 +196,7 @@ ExceptionHandler(ExceptionType which)
                         // Leo del espacio de usuario el string a escribir
                         int arg = machine->ReadRegister(4);
                         readStrFromUser(arg, buff, size);
+                        size = strlen(buff);
                         DEBUG('a', "Escribo en archivo %d\n", fd);
                         write = f->Write((const char*)buff, size);
                     }
