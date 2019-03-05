@@ -13,7 +13,7 @@
 #define SIZE 1024
 
 int 
-main(int argc, char *argv)
+main(int argc, char **argv)
 {
     // Valido que sean dos argumentos
     if (argc < 2) {
@@ -31,19 +31,20 @@ main(int argc, char *argv)
         Write("El archivo de origen no existe\n", 34, ConsoleOutput);
         Exit(0);
     }
-    char *buffer[SIZE];
-    Read(buffer, SIZE, srcFileId);
 
     // Los argumentos son dos, uso el 2do para ver si ya existe o hay que crear el archivo
     int dstFileId = Open(dst_file);
-    if (dstFileId > 1) {
-        Write(buffer, SIZE, dstFileId);
-    } else {
+    if (dstFileId < 1) {
         Create(dst_file);
         dstFileId = Open(dst_file);
-        Write(buffer, SIZE, dstFileId);
     }
-    Exit(1);
+    char buffer[1];
+    read = Read(buffer, 1, srcFileId);
+    while (read == 1) {
+        Write(buffer, 1, dstFileId);
+        read = Read(buffer, 1, srcFileId);
+    }
+    Close(srcFileId);
+    Close(dstFileId);
 
 }
-
