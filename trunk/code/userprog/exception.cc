@@ -293,9 +293,10 @@ ExceptionHandler(ExceptionType which)
                 int args_addr = machine->ReadRegister(5);
 				readStrFromUser(name_addr, path, 128);
 				OpenFile *executable = fileSystem->Open(path);
-				if (executable == NULL)
+				if (executable == NULL) {
                     delete []path;
 					break;
+                }
                 Thread *t = new Thread(path, 0, true);
 				AddrSpace *addr = new AddrSpace(executable);
                 if (!addr->IsValid()) { // El espacio de direcciones no es valido!
