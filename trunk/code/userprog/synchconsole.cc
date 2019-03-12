@@ -69,8 +69,8 @@ void SynchConsole::WriteChar(char c)
 char SynchConsole::ReadChar()
 {
     readLock->Acquire();
-    char c = console->GetChar();
     readSemaphore->P();
+    char c = console->GetChar();
     readLock->Release();
     return c;
 }

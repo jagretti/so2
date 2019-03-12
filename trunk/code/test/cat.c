@@ -3,9 +3,9 @@
 
 int main(int argc, char** argv)
 {
-  if (argc < 1) Exit(1);
+  if (argc < 2) Exit(1);
   OpenFileId output = ConsoleOutput;
-  OpenFileId input =  Open(argv[0]);
+  OpenFileId input =  Open(argv[1]);
   char buff[1];
   int read = Read(buff, 1, input);
   while (read == 1) {

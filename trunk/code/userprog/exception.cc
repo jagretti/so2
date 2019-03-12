@@ -54,8 +54,9 @@ void readBuffFromUsr(int usrAddr, char *outBuff, int byteCount)
 void writeStrToUsr(char *str, int usrAddr) 
 {
     int c, i = 0;
-    while ((c = str[i++]) != '\0') {
+    while ((c = str[i]) != '\0') {
         ASSERT(machine->WriteMem(usrAddr+i,1,c));
+        i++;
     }
 }
 
@@ -198,7 +199,7 @@ ExceptionHandler(ExceptionType which)
                         // Leo del espacio de usuario el string a escribir
                         int arg = machine->ReadRegister(4);
                         readStrFromUser(arg, buff, size);
-                        size = strlen(buff);
+                        size = strlen(buff) + 1;
                         DEBUG('a', "Escribo en archivo %d\n", fd);
                         write = f->Write((const char*)buff, size);
                     }
@@ -292,7 +293,7 @@ ExceptionHandler(ExceptionType which)
                 int name_addr = machine->ReadRegister(4);
                 int args_addr = machine->ReadRegister(5);
 				readStrFromUser(name_addr, path, 128);
-				OpenFile *executable = fileSystem->Open(path);
+                OpenFile *executable = fileSystem->Open(path);
 				if (executable == NULL) {
                     delete []path;
 					break;
@@ -309,6 +310,10 @@ ExceptionHandler(ExceptionType which)
                 t->space = addr;
                 int id = getNextId(t);
                 char **args = SaveArgs(args_addr);
+                // imprimo todos los argumentos a escribir;
+                int i = 0;
+                while(args[i] != NULL) printf("args > %s \n",args[i++]);
+                //
                 t->Fork(beginProcess, args);
                 machine->WriteRegister(2, id);
                 incrementarPC();
