@@ -32,7 +32,7 @@ LD = $(GCCDIR)ld
 
 CPP = /lib/cpp
 INCDIR =-I../userprog -I../threads
-CFLAGS = -G 0 -c $(INCDIR) -mips1
+CFLAGS = -G 0 -c $(INCDIR) -mips1 -std=c99
 
 all: lib/gcc-lib halt shell matmult sort filetest cat cp
 

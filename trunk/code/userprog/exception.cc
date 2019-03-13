@@ -311,8 +311,8 @@ ExceptionHandler(ExceptionType which)
                 int id = getNextId(t);
                 char **args = SaveArgs(args_addr);
                 // imprimo todos los argumentos a escribir;
-                int i = 0;
-                while(args[i] != NULL) printf("args > %s \n",args[i++]);
+                //int i = 0;
+                //while(args[i] != NULL) printf("args > %s \n",args[i++]);
                 //
                 t->Fork(beginProcess, args);
                 machine->WriteRegister(2, id);

@@ -16,14 +16,14 @@ int
 main(int argc, char **argv)
 {
     // Valido que sean dos argumentos
-    if (argc < 2) {
+    if (argc < 3) {
         Write("Argumentos invalidos\n", 22, ConsoleOutput);
         Write("USO CORRECTO: $cp archivo_origen archivo_destino\n", 52, ConsoleOutput);
         Exit(0);
     }
         
-    char *src_file = argv[0];
-    char *dst_file = argv[1];
+    char *src_file = argv[1];
+    char *dst_file = argv[2];
 
     //Abro archivo de origen
     int srcFileId = Open(src_file);
@@ -39,7 +39,7 @@ main(int argc, char **argv)
         dstFileId = Open(dst_file);
     }
     char buffer[1];
-    read = Read(buffer, 1, srcFileId);
+    int read = Read(buffer, 1, srcFileId);
     while (read == 1) {
         Write(buffer, 1, dstFileId);
         read = Read(buffer, 1, srcFileId);
