@@ -199,7 +199,7 @@ ExceptionHandler(ExceptionType which)
                         // Leo del espacio de usuario el string a escribir
                         int arg = machine->ReadRegister(4);
                         readStrFromUser(arg, buff, size);
-                        size = strlen(buff) + 1;
+                        size = strlen(buff);
                         DEBUG('a', "Escribo en archivo %d\n", fd);
                         write = f->Write((const char*)buff, size);
                     }

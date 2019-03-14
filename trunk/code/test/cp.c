@@ -27,7 +27,7 @@ main(int argc, char **argv)
 
     //Abro archivo de origen
     int srcFileId = Open(src_file);
-    if (srcFileId < 2) {
+    if (srcFileId < 1) {
         Write("El archivo de origen no existe\n", 34, ConsoleOutput);
         Exit(0);
     }
