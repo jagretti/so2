@@ -106,8 +106,8 @@ private:
 
     /// For debugging.
     const char *name;
-
-    // Add other needed fields here.
+    Thread* owner;
+    Semaphore* s;
 };
 
 // This class defined a “condition variable”.
@@ -164,9 +164,28 @@ public:
 private:
 
     const char *name;
-
-    // Other needed fields are to be added here.
+    Lock* l;
+    List<Semaphore*> *queue;
 };
 
+class Port {
+public:
+
+    Port(const char* debug);
+    ~Port();
+
+    void Send(int m);
+    void Receive(int *m);
+
+private:
+
+    const char* name;
+    int buff;
+    bool state;
+    Condition* receptor;
+    Lock* l;
+    Condition* lleno;
+    Condition* vacio;
+};
 
 #endif

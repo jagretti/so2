@@ -97,11 +97,17 @@ Semaphore::V()
 /// Note -- without a correct implementation of `Condition::Wait`, the test
 /// case in the network assignment will not work!
 
-Lock::Lock(const char *debugName)
-{}
+Lock::Lock(const char* debugName)
+{
+    name = debugName;
+    s = new Semaphore("Lock", 1);
+    owner = nullptr;
+}
 
 Lock::~Lock()
-{}
+{
+    delete s;
+}
 
 const char *
 Lock::GetName() const
@@ -111,21 +117,37 @@ Lock::GetName() const
 
 void
 Lock::Acquire()
-{}
+{
+    ASSERT(!IsHeldByCurrentThread());
+    s->P();
+    owner = currentThread;
+}
 
 void
 Lock::Release()
-{}
+{
+    ASSERT(IsHeldByCurrentThread());
+    owner = nullptr;
+    s->V();
+}
 
 bool
 Lock::IsHeldByCurrentThread() const
-{}
+{
+    return currentThread == owner;
+}
 
 Condition::Condition(const char *debugName, Lock *conditionLock)
-{}
+{
+    name = debugName;
+    l = conditionLock;
+    queue = new List<Semaphore*>();
+}
 
 Condition::~Condition()
-{}
+{
+    delete queue;
+}
 
 const char *
 Condition::GetName() const
@@ -135,12 +157,75 @@ Condition::GetName() const
 
 void
 Condition::Wait()
-{}
+{
+    Semaphore* s = new Semaphore("sem_wait",0);
+    queue->Append(s);
+    l->Release();
+    s->P();
+    l->Acquire();
+}
 
 void
 Condition::Signal()
-{}
+{
+    if(!queue->IsEmpty()) {
+        Semaphore* s = queue->Pop();
+        s->V();
+    }
+}
 
 void
 Condition::Broadcast()
-{}
+{
+    while(!queue->IsEmpty()) {
+        Semaphore* s = queue->Pop();
+        s->V();
+    }
+}
+
+
+Port::Port(const char* debugName)
+{
+    name = debugName;
+    state = false;
+    l = new Lock("puerto");
+    lleno = new Condition("cond_lleno",l);
+    vacio = new Condition("cond_vacio",l);
+    receptor = new Condition("hay receptor",l);
+}
+
+Port::~Port()
+{
+    delete l;
+    delete lleno;
+    delete vacio;
+    delete receptor;
+}
+
+void
+Port::Send(int m)
+{
+    l->Acquire();
+    while(state) {
+        vacio->Wait();
+    }
+    buff = m;
+    state = true;
+    lleno->Signal();
+    receptor->Wait(); //se queda esperando a que haya un receptor.
+    l->Release();
+}
+
+void
+Port::Receive(int *m)
+{
+    l->Acquire();
+    while(state == false) {
+        lleno->Wait();
+    }
+    *m = buff;
+    state = false;
+    vacio->Signal();
+    receptor->Signal();
+    l->Release();
+}
