@@ -40,7 +40,8 @@ SynchDisk *synchDisk;
 #endif
 
 #ifdef USER_PROGRAM  // Requires either *FILESYS* or *FILESYS_STUB*.
-Machine *machine;  ///< User program memory and registers.
+Machine *machine;              ///< User program memory and registers.
+Bitmap *userProgramFrameTable; ///< User program physical memory frame table.
 #endif
 
 #ifdef NETWORK
@@ -181,6 +182,7 @@ Initialize(int argc, char **argv)
 #ifdef USER_PROGRAM
     Debugger *d = debugUserProg ? new Debugger : nullptr;
     machine = new Machine(d);  // This must come first.
+    userProgramFrameTable = new Bitmap(NUM_PHYS_PAGES);
     SetExceptionHandlers();
 #endif
 
@@ -212,6 +214,7 @@ Cleanup()
 
 #ifdef USER_PROGRAM
     delete machine;
+    delete userProgramFrameTable;
 #endif
 
 #ifdef FILESYS_NEEDED
