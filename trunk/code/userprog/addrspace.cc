@@ -96,6 +96,8 @@ AddrSpace::AddrSpace(OpenFile *executable)
     DEBUG('a', "Initializing address space, num pages %d, size %d\n", 
 					numPages, size);
     // first, set up the translation 
+    // Esta es la tabla de paginacion que vive en memoria
+    // que cada proceso tiene la suya
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
 	    pageTable[i].virtualPage = i;	
@@ -112,7 +114,6 @@ AddrSpace::AddrSpace(OpenFile *executable)
 		// pages to be read-only
     
         // Pongo en 0 el espacio de direcciones del proceso
-        DEBUG('a', "Pongo 0s en todo el espacio de direcciones\n");
         memset(&(machine->mainMemory[pageTable[i].physicalPage * PageSize]), 0, PageSize); 
     }
     
@@ -226,12 +227,24 @@ void AddrSpace::SaveState()
 //	this address space can run.
 //
 //      For now, tell the machine where to find the page table.
+//
+//  Ahora si se usa tlb, aca se tiene que limpiar las paginas del proceso
+//  que se estaba ejecutando
+//
 //----------------------------------------------------------------------
 
 void AddrSpace::RestoreState() 
 {
+#ifdef USE_TLB
+    // Limpio la tlb
+    int i;
+    for(i = 0; i <= TLBSize; i++) {
+        machine->tlb[i].valid = false;
+    }
+#else
     machine->pageTable = pageTable;
     machine->pageTableSize = numPages;
+#endif
 }
 
 //----------------------------------------------------------------------
@@ -245,4 +258,11 @@ bool AddrSpace::IsValid()
     return this->isValid;
 }
 
-
+//----------------------------------------------------------------------
+// Obtener la i-esima posicion de la pageTable asociada
+// al espacio de direcciones del thread
+//----------------------------------------------------------------------
+TranslationEntry AddrSpace::GetEntry(int virtualPageIndex)
+{
+    return this->pageTable[virtualPageIndex];
+}

@@ -33,6 +33,8 @@ class AddrSpace {
 
     bool IsValid(); // Retorna si es valido el addrspace o no
 
+    TranslationEntry GetEntry(int virtualPageIndex); // Retorna la entrada correspondiente a esa pagina virtual
+
   private:
     TranslationEntry *pageTable;	// Assume linear page table translation
 					// for now!

@@ -120,6 +120,26 @@ void beginProcess(void *args)
 }
 //---------------------------------------------------------------------
 
+//---------------------------------------------------------------------
+// Guarda en la TLB la referencia a esa entrada de la pageTable
+//---------------------------------------------------------------------
+int SaveInTLB(TranslationEntry toSave)
+{
+    int position = -1;
+    for(int i = 0; i <= TLBSize; i++) {
+        if(!machine->tlb[i].valid) {
+            position = i;
+            break;
+        }
+    }
+    if(position < 0) {
+        position = 0;
+    }
+    machine->tlb[position] = toSave;
+    return position;
+}
+//---------------------------------------------------------------------
+
 //----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
@@ -293,14 +313,17 @@ ExceptionHandler(ExceptionType which)
                 int name_addr = machine->ReadRegister(4);
                 int args_addr = machine->ReadRegister(5);
 				readStrFromUser(name_addr, path, 128);
+                DEBUG('a', "Corriendo programa %s\n", path);
                 OpenFile *executable = fileSystem->Open(path);
 				if (executable == NULL) {
+                    DEBUG('a', "No se pudo abrir/encontrar el ejecutable %s", path);
                     delete []path;
 					break;
                 }
                 Thread *t = new Thread(path, 0, true);
 				AddrSpace *addr = new AddrSpace(executable);
                 if (!addr->IsValid()) { // El espacio de direcciones no es valido!
+                    DEBUG('a', "El espacio de direcciones no es valido!\n");
                     t->exitS = 0;
                     t->Finish();
                     delete addr;
@@ -310,10 +333,6 @@ ExceptionHandler(ExceptionType which)
                 t->space = addr;
                 int id = getNextId(t);
                 char **args = SaveArgs(args_addr);
-                // imprimo todos los argumentos a escribir;
-                //int i = 0;
-                //while(args[i] != NULL) printf("args > %s \n",args[i++]);
-                //
                 t->Fork(beginProcess, args);
                 machine->WriteRegister(2, id);
                 incrementarPC();
@@ -321,8 +340,18 @@ ExceptionHandler(ExceptionType which)
                 break;
             }
         }
+    } else if(which == PageFaultException) {
+        int virtualPage = machine->ReadRegister(4);
+        DEBUG('a', "PageFault de pagina %d\n", virtualPage); 
+        // Busco la entrada en el espacio de direcciones del thread actual
+        TranslationEntry entry = currentThread->space->GetEntry(virtualPage);
+        int position = SaveInTLB(entry);
+        machine->WriteRegister(2, entry.physicalPage); 
+        incrementarPC();
     } else {
-	printf("Unexpected user mode exception %d %d\n", which, type);
-	ASSERT(false);
+	    printf("Unexpected user mode exception %d %d\n", which, type);
+	    ASSERT(false);
     }
 }
+
+
