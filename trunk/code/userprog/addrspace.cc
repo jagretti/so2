@@ -238,7 +238,7 @@ void AddrSpace::RestoreState()
 #ifdef USE_TLB
     // Limpio la tlb
     int i;
-    for(i = 0; i <= TLBSize; i++) {
+    for(i = 0; i < TLBSize; i++) {
         machine->tlb[i].valid = false;
     }
 #else
