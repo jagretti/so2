@@ -27,6 +27,51 @@
 #include "filesys/directory_entry.hh"
 #include "threads/system.hh"
 
+//---------------------------------------------------------------------
+// Funciones que leen y escriben en el espacio de usuario
+//---------------------------------------------------------------------
+void
+readStrFromUser(int usrAddr, char *outStr, unsigned byteCount)
+{
+    int i = 0, c;
+    if (byteCount < 1) return;
+    do {
+        ASSERT(machine->ReadMem(usrAddr+i,1,&c));
+        outStr[i] = c;
+    } while (outStr[i++] != '\0' && i < byteCount);
+}
+
+void
+readBuffFromUsr(int usrAddr, char *outBuff, int byteCount)
+{
+    int c, i = 0;
+    while (byteCount > 0) {
+        ASSERT(machine->ReadMem(usrAddr+i,1,&c));
+        outBuff[i++] = c;
+        byteCount--;
+    }
+}
+
+void
+writeStrToUsr(char *str, int usrAddr)
+{
+    int c, i = 0;
+    while ((c = str[i]) != '\0') {
+        ASSERT(machine->WriteMem(usrAddr+i,1,c));
+        i++;
+    }
+}
+
+void
+writeBuffToUsr(char *str, int usrAddr, int byteCount)
+{
+    int i = 0;
+    while (byteCount > 0) {
+        ASSERT(machine -> WriteMem(usrAddr+i,1,str[i]));
+        byteCount--;
+        i++;
+    }
+}
 
 static void
 IncrementPC()
@@ -78,34 +123,166 @@ SyscallHandler(ExceptionType _et)
 
     switch (scid) {
 
-        case SC_HALT:
-            DEBUG('a', "Shutdown, initiated by user program.\n");
-            interrupt->Halt();
+    case SC_HALT: {
+        DEBUG('a', "Shutdown, initiated by user program.\n");
+        interrupt->Halt();
+        break;
+    }
+
+    case SC_CREATE: {
+        int filenameAddr = machine->ReadRegister(4);
+        if (filenameAddr == 0)
+            DEBUG('a', "Error: address to filename string is null.\n");
+
+        char filename[FILE_NAME_MAX_LEN + 1];
+        if (!ReadStringFromUser(filenameAddr, filename, sizeof filename))
+            DEBUG('a', "Error: filename string too long (maximum is %u bytes).\n",
+                  FILE_NAME_MAX_LEN);
+
+        DEBUG('a', "Open requested for file `%s`.\n", filename);
+        if (fileSystem->Create(filename,0)) {
+            DEBUG('a', "Se creo el archivo %s correctamente\n", filename);
+            machine->WriteRegister(2, 1);
+        }
+        else {
+            DEBUG('a', "Error creando el archivo %s \n", filename);
+            machine->WriteRegister(2, -1);
+        }
+        break;
+    }
+
+    case SC_CLOSE: {
+        int fid = machine->ReadRegister(4);
+        DEBUG('a', "Close requested for id %u.\n", fid);
+        if (fid < 2) {
+            DEBUG('a', "Hubo un error cerrando un archivo");
+            machine->WriteRegister(2, -1);
+        } else {
+            currentThread->CloseFile(fid);
+            DEBUG('a', "Se cerro archivo con fd %d", fid);
+        }
+        break;
+    }
+
+    case SC_WRITE: {
+        int fd = machine->ReadRegister(6);
+        int size = machine->ReadRegister(5);
+        char *buff = new char[size];
+        int write = -1;
+        if (fd == 0) { // Error - no se puede escribir en stdin
+            machine->WriteRegister(2, write);
+            delete []buff;
             break;
+        } else {
+            if (fd == 1) { // Escribe en stdout
+                readBuffFromUsr(machine->ReadRegister(4), buff, size);
+                for(int i = 0; i < size; i++) {
+                    sconsole->WriteChar(buff[i]);
+                }
+                write = size - 1;
+            } else {
+                OpenFile *f = currentThread->GetFile(fd);
+                if (f == NULL) {
+                    DEBUG('a', "El archivo %d no esta abierto", fd);
+                    machine->WriteRegister(2, write);
+                    delete []buff;
+                    break;
+                }
+                // Leo del espacio de usuario el string a escribir
+                int arg = machine->ReadRegister(4);
+                readStrFromUser(arg, buff, size);
+                size = strlen(buff);
+                DEBUG('a', "Escribo en archivo %d\n", fd);
+                write = f->Write((const char*)buff, size);
+            }
+        }
+        machine->WriteRegister(2, write);
+        delete []buff;
+        break;
+    }
 
-        case SC_CREATE: {
-            int filenameAddr = machine->ReadRegister(4);
-            if (filenameAddr == 0)
-                DEBUG('a', "Error: address to filename string is null.\n");
+    case SC_READ:{
+        int fd = machine->ReadRegister(6);
+        int size = machine->ReadRegister(5);
+        char *buff = new char[size];
+        int read = -1;
+        if (fd == 1) { //stdout
+            machine->WriteRegister(2, read);
+            delete []buff;
+            break;
+        } else {
+            if (fd == 0) { //stdin
+                char c;
+                for(int i = 0; i < size; i++) {
+                    c = sconsole->ReadChar();
+                    buff[i] = c;
+                }
+                writeBuffToUsr(buff, machine->ReadRegister(4), size);
+                read = size - 1;
+            } else {
+                OpenFile *f = currentThread->GetFile(fd);
+                if (f == NULL) {
+                    machine->WriteRegister(2, read);
+                    delete []buff;
+                    break;
+                }
+                read = f->Read(buff, size);
+                writeBuffToUsr(buff, machine->ReadRegister(4),read);
+            }
+        }
+        machine->WriteRegister(2,read);
+        DEBUG('a', "Leo en archivo %d\n", fd);
+        delete []buff;
+        break;
+    }
 
-            char filename[FILE_NAME_MAX_LEN + 1];
-            if (!ReadStringFromUser(filenameAddr, filename, sizeof filename))
-                DEBUG('a', "Error: filename string too long (maximum is %u bytes).\n",
-                      FILE_NAME_MAX_LEN);
-
-            DEBUG('a', "Open requested for file `%s`.\n", filename);
+    case SC_EXIT:{
+        int s = machine->ReadRegister(4);
+        currentThread->exitStatus = s;
+        currentThread->Finish();
+        break;
+    }
+    case SC_JOIN:{
+        int id = machine->ReadRegister(4);
+        Thread *t = procTable[id];
+        t->Join();
+        machine->WriteRegister(2, 0);
+        break;
+    }
+    case SC_EXEC:{
+        char *path = new char[128];
+        int name_addr = machine->ReadRegister(4);
+        int args_addr = machine->ReadRegister(5);
+        readStrFromUser(name_addr, path, 128);
+        OpenFile *executable = fileSystem->Open(path);
+        if (executable == NULL) {
+            delete []path;
             break;
         }
-
-        case SC_CLOSE: {
-            int fid = machine->ReadRegister(4);
-            DEBUG('a', "Close requested for id %u.\n", fid);
+        Thread *t = new Thread(path, 0, true);
+        AddressSpace *addr = new AddressSpace(executable);
+        if (!addr->IsValid()) { // El espacio de direcciones no es valido!
+            t->exitStatus = 0;
+            t->Finish();
+            delete addr;
+            delete []path;
             break;
         }
-
-        default:
-            fprintf(stderr, "Unexpected system call: id %d.\n", scid);
-            ASSERT(false);
+        t->space = addr;
+        int id = getNextId(t);
+        char **args = SaveArgs(args_addr);
+        // imprimo todos los argumentos a escribir;
+        //int i = 0;
+        //while(args[i] != NULL) printf("args > %s \n",args[i++]);
+        //
+        t->Fork(beginProcess, args);
+        machine->WriteRegister(2, id);
+        delete []path;
+        break;
+    }
+    default:
+        fprintf(stderr, "Unexpected system call: id %d.\n", scid);
+        ASSERT(false);
 
     }
 

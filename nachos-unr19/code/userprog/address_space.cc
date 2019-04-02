@@ -83,8 +83,9 @@ AddressSpace::AddressSpace(OpenFile *executable)
           numPages, size);
 
     // First, set up the translation.
-
     pageTable = new TranslationEntry[numPages];
+    //
+    char *mainMemory = machine->GetMMU()->mainMemory;
     for (unsigned i = 0; i < numPages; i++) {
         pageTable[i].virtualPage  = i;
         pageTable[i].physicalPage = userProgramFrameTable->Find();
@@ -94,28 +95,30 @@ AddressSpace::AddressSpace(OpenFile *executable)
         pageTable[i].readOnly     = false;
           // If the code segment was entirely on a separate page, we could
           // set its pages to be read-only.
+        // Zero out the physical address space
+        memset(&mainMemory[pageTable[i].physicalPage * PAGE_SIZE], 0, PAGE_SIZE);
     }
-
-    char *mainMemory = machine->GetMMU()->mainMemory;
-
-    // Zero out the entire address space, to zero the unitialized data
-    // segment and the stack segment.
-    memset(mainMemory, 0, size);
 
     // Then, copy in the code and data segments into memory.
-    if (noffH.code.size > 0) {
-        DEBUG('a', "Initializing code segment, at 0x%X, size %u\n",
-              noffH.code.virtualAddr, noffH.code.size);
-        executable->ReadAt(&(mainMemory[noffH.code.virtualAddr]),
-                           noffH.code.size, noffH.code.inFileAddr);
-    }
-    if (noffH.initData.size > 0) {
-        DEBUG('a', "Initializing data segment, at 0x%X, size %u\n",
-              noffH.initData.virtualAddr, noffH.initData.size);
-        executable->ReadAt(&(mainMemory[noffH.initData.virtualAddr]),
-          noffH.initData.size, noffH.initData.inFileAddr);
+    for (unsigned i = 0; i < noffH.code.size; i++) {
+        char byte;
+        executable->ReadAt(&byte, 1, noffH.code.inFileAddr + i);
+        int virtualAddr = noffH.code.virtualAddr + i;
+        int virtualPageNum = virtualAddr / PAGE_SIZE;
+        int offset = virtualAddr % PAGE_SIZE;
+        int physicalPage = pageTable[virtualPageNum].physicalPage * PAGE_SIZE;
+        mainMemory[physicalPage + offset] = byte;
     }
 
+    for (unsigned i = 0; i < noffH.initData.size; i++) {
+        char byte;
+        executable->ReadAt(&byte, 1, noffH.initData.inFileAddr + i);
+        int virtualAddr = noffH.initData.virtualAddr + i;
+        int virtualPageNum = virtualAddr / PAGE_SIZE;
+        int offset = virtualAddr % PAGE_SIZE;
+        int physicalPage = pageTable[virtualPageNum].physicalPage * PAGE_SIZE;
+        mainMemory[physicalPage + offset] = byte;
+    }
 }
 
 /// Deallocate an address space.

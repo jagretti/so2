@@ -38,7 +38,7 @@ IsThreadStatus(ThreadStatus s)
 /// `Thread::Fork`.
 ///
 /// * `threadName` is an arbitrary string, useful for debugging.
-Thread::Thread(const char *threadName)
+Thread::Thread(const char *threadName, int priority, bool willJoin)
 {
     name     = threadName;
     stackTop = nullptr;
@@ -46,6 +46,8 @@ Thread::Thread(const char *threadName)
     status   = JUST_CREATED;
 #ifdef USER_PROGRAM
     space    = nullptr;
+    priority = priority;
+    useJoin = willJoin;
 #endif
 }
 
@@ -282,6 +284,23 @@ Thread::StackAllocate(VoidFunctionPtr func, void *arg)
     machineState[WhenDonePCState] = (HostMemoryAddress) ThreadFinish;
 }
 
+
+//----------------------------------------------------------------------
+// Thread::Join
+//----------------------------------------------------------------------
+void
+Thread::Join()
+{
+    ASSERT(useJoin);
+    int m;
+    joinPort->Receive(&m);
+}
+
+int
+Thread::GetPriority() {
+    return priority;
+}
+
 #ifdef USER_PROGRAM
 #include "machine/machine.hh"
 
@@ -307,6 +326,36 @@ Thread::RestoreUserState()
 {
     for (unsigned i = 0; i < NUM_TOTAL_REGS; i++)
         machine->WriteRegister(i, userRegisters[i]);
+}
+
+int
+Thread::AddFile(OpenFile *f)
+{
+    for(int i = 2; i < MAX_FILES; i++) { //El 0 y 1 son stdin y stdout
+    	if (files[i] == NULL) {
+    		files[i] = f;
+    		return i;
+    	}
+    }
+    return -1;
+}
+
+void
+Thread::CloseFile(int f)
+{
+	if (f < MAX_FILES && f > 1) {
+		files[f] = NULL;
+    }
+}
+
+OpenFile*
+Thread::GetFile(int f)
+{
+	if (f < MAX_FILES && f > 1) {
+		return files[f];
+    } else {
+        return NULL;
+    }
 }
 
 #endif

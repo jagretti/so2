@@ -42,6 +42,8 @@ SynchDisk *synchDisk;
 #ifdef USER_PROGRAM  // Requires either *FILESYS* or *FILESYS_STUB*.
 Machine *machine;              ///< User program memory and registers.
 Bitmap *userProgramFrameTable; ///< User program physical memory frame table.
+SynchConsole *sconsole;
+// Thread **procTable;
 #endif
 
 #ifdef NETWORK
