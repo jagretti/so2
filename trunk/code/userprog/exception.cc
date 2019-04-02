@@ -36,8 +36,15 @@ void readStrFromUser(int usrAddr, char *outStr, unsigned byteCount)
     int i = 0, c;
     if (byteCount < 1) return;
     do {
-        ASSERT(machine->ReadMem(usrAddr+i,1,&c));
-        outStr[i] = c;
+        //ASSERT(machine->ReadMem(usrAddr+i,1,&c));
+        bool read = machine->ReadMem(usrAddr+i,1,&c);
+        DEBUG('a', "Lectura ReadMem %d\n", read);
+        if(read) {
+            outStr[i] = c;
+        } else {
+            read = machine->ReadMem(usrAddr+i,1,&c);
+            outStr[i] = c;
+        }
     } while (outStr[i++] != '\0' && i < byteCount);
 }
 
@@ -45,8 +52,16 @@ void readBuffFromUsr(int usrAddr, char *outBuff, int byteCount)
 {
     int c, i = 0;
     while (byteCount > 0) {
-        ASSERT(machine->ReadMem(usrAddr+i,1,&c));
-        outBuff[i++] = c;
+        //ASSERT(machine->ReadMem(usrAddr+i,1,&c));
+        bool read = machine->ReadMem(usrAddr+i,1,&c);
+        if(read) {
+            outBuff[i] = c;
+        } else {
+            read = machine->ReadMem(usrAddr+i,1,&c);
+            outBuff[i] = c;
+        }
+        //outBuff[i++] = c;
+        i++;
         byteCount--;
     }
 }
@@ -55,7 +70,11 @@ void writeStrToUsr(char *str, int usrAddr)
 {
     int c, i = 0;
     while ((c = str[i]) != '\0') {
-        ASSERT(machine->WriteMem(usrAddr+i,1,c));
+        //ASSERT(machine->WriteMem(usrAddr+i,1,c));
+        bool write = machine->WriteMem(usrAddr+i,1,c);
+        //if(!write) {
+        //    machine->WriteMem(usrAddr+i,1,c);   
+        //}
         i++;
     }
 }
@@ -64,7 +83,11 @@ void writeBuffToUsr(char *str, int usrAddr, int byteCount)
 {
     int i = 0;
     while (byteCount > 0) {
-        ASSERT(machine -> WriteMem(usrAddr+i,1,str[i]));
+        //ASSERT(machine -> WriteMem(usrAddr+i,1,str[i]));
+        bool write = machine -> WriteMem(usrAddr+i,1,str[i]);
+        //if(!write) {
+        //    machine -> WriteMem(usrAddr+i,1,str[i]);
+        //}
         byteCount--;
         i++;
     }
@@ -134,6 +157,12 @@ int SaveInTLB(TranslationEntry toSave)
     }
     if(position < 0) {
         position = 0;
+        for (int j = 0; j < TLBSize; j++) {
+            if(machine->tlb[j].dirty) {
+                currentThread->space->SaveEntry(machine->tlb[j]);
+            }
+            machine->tlb[j].valid = false;
+        }
     }
     machine->tlb[position] = toSave;
     return position;
@@ -343,12 +372,18 @@ ExceptionHandler(ExceptionType which)
             }
         }
     } else if(which == PageFaultException) {
-        int virtualPage = machine->ReadRegister(39);
+        int virtualAddr = machine->ReadRegister(BadVAddrReg);
+        int virtualPage = virtualAddr / PageSize;
+        int offset = virtualAddr % PageSize;
         DEBUG('a', "PageFault de pagina %d\n", virtualPage); 
         // Busco la entrada en el espacio de direcciones del thread actual
         TranslationEntry entry = currentThread->space->GetEntry(virtualPage);
         int position = SaveInTLB(entry);
         machine->WriteRegister(2, 1); 
+        #ifdef DEBUG
+        for(int i = 0; i < TLBSize; i++)
+            printf("%s\n", tlb[i]);
+        #endif
         //incrementarPC();
     } else {
 	    printf("Unexpected user mode exception %d %d\n", which, type);
