@@ -72,9 +72,9 @@ void writeStrToUsr(char *str, int usrAddr)
     while ((c = str[i]) != '\0') {
         //ASSERT(machine->WriteMem(usrAddr+i,1,c));
         bool write = machine->WriteMem(usrAddr+i,1,c);
-        //if(!write) {
-        //    machine->WriteMem(usrAddr+i,1,c);   
-        //}
+        if(!write) {
+            machine->WriteMem(usrAddr+i,1,c);   
+        }
         i++;
     }
 }
@@ -85,9 +85,9 @@ void writeBuffToUsr(char *str, int usrAddr, int byteCount)
     while (byteCount > 0) {
         //ASSERT(machine -> WriteMem(usrAddr+i,1,str[i]));
         bool write = machine -> WriteMem(usrAddr+i,1,str[i]);
-        //if(!write) {
-        //    machine -> WriteMem(usrAddr+i,1,str[i]);
-        //}
+        if(!write) {
+            machine -> WriteMem(usrAddr+i,1,str[i]);
+        }
         byteCount--;
         i++;
     }
@@ -107,6 +107,7 @@ incrementarPC()
     pc += 4;
     machine->WriteRegister(NextPCReg,pc);
 }
+//---------------------------------------------------------------------
 
 //---------------------------------------------------------------------
 // Funciones que trabajan sobre la procTable
@@ -149,27 +150,27 @@ void beginProcess(void *args)
 int SaveInTLB(TranslationEntry toSave)
 {
     int position = -1;
-    for(int i = 0; i < TLBSize; i++) {
+    int i = 0;
+    for(i = 0; i < TLBSize; i++) {
         if(!machine->tlb[i].valid) {
             position = i;
             break;
         }
-    }
+    }   
     if(position < 0) {
-        position = 0;
-        for (int j = 0; j < TLBSize; j++) {
-            if(machine->tlb[j].dirty) {
-                currentThread->space->SaveEntry(machine->tlb[j]);
-            }
-            machine->tlb[j].valid = false;
+        TranslationEntry toMem = machine->tlb[TLBSize - 1];
+        if(toMem.dirty) {
+            currentThread->space->SaveEntry(toMem);
         }
+        for(i = 1; i < TLBSize; i++) {
+            machine->tlb[i] = machine->tlb[i-1];
+        }    
+        position = 0;
     }
     machine->tlb[position] = toSave;
-    return position;
+    return 1;
 }
 //---------------------------------------------------------------------
-
-int next_page_num = 0;
 
 //----------------------------------------------------------------------
 // ExceptionHandler
@@ -277,6 +278,7 @@ ExceptionHandler(ExceptionType which)
                             c = sconsole->ReadChar();
                             buff[i] = c;
                         }
+                        DEBUG('k', "%c\n", buff[0]);
 				        writeBuffToUsr(buff, machine->ReadRegister(4), size);
                         read = size - 1;
                     } else {
@@ -378,13 +380,8 @@ ExceptionHandler(ExceptionType which)
         DEBUG('a', "PageFault de pagina %d\n", virtualPage); 
         // Busco la entrada en el espacio de direcciones del thread actual
         TranslationEntry entry = currentThread->space->GetEntry(virtualPage);
-        int position = SaveInTLB(entry);
+        SaveInTLB(entry);
         machine->WriteRegister(2, 1); 
-        #ifdef DEBUG
-        for(int i = 0; i < TLBSize; i++)
-            printf("%s\n", tlb[i]);
-        #endif
-        //incrementarPC();
     } else {
 	    printf("Unexpected user mode exception %d %d\n", which, type);
 	    ASSERT(false);

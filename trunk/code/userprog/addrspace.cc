@@ -220,11 +220,13 @@ AddrSpace::InitRegisters()
 
 void AddrSpace::SaveState() 
 {
+#ifdef USE_TLB
     for (int i = 0; i < TLBSize; i++) {
         if (machine->tlb[i].dirty) {
             this->SaveEntry(machine->tlb[i]);
         }
     }
+#endif
 }
 
 //----------------------------------------------------------------------
@@ -276,6 +278,5 @@ TranslationEntry AddrSpace::GetEntry(int virtualPageIndex)
 bool AddrSpace::SaveEntry(TranslationEntry toSave)
 {
     int vpn = toSave.virtualPage;
-    toSave.dirty = false;
     this->pageTable[vpn] = toSave;
 }
