@@ -356,6 +356,7 @@ ExceptionHandler(ExceptionType which)
             }
             case SC_Join:{
                 int id = machine->ReadRegister(4);
+                id--;
                 Thread *t = procTable[id];
                 t->Join();
                 machine->WriteRegister(2, 0);
@@ -399,7 +400,7 @@ ExceptionHandler(ExceptionType which)
         int virtualAddr = machine->ReadRegister(BadVAddrReg);
         int virtualPage = virtualAddr / PageSize;
         int offset = virtualAddr % PageSize;
-        DEBUG('a', "PageFault de pagina %d\n", virtualPage); 
+        DEBUG('f', "PageFault de pagina %d\n", virtualPage); 
         // Busco la entrada en el espacio de direcciones del thread actual
         TranslationEntry entry = currentThread->space->GetEntry(virtualPage);
         SaveInTLB(entry, position);

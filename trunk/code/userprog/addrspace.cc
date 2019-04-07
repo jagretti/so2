@@ -222,7 +222,7 @@ void AddrSpace::SaveState()
 {
 #ifdef USE_TLB
     for (int i = 0; i < TLBSize; i++) {
-        if (machine->tlb[i].dirty) {
+        if (machine->tlb[i].dirty and machine->tlb[i].valid) { //PREGUNTAR SI ESTA BIEN!!
             this->SaveEntry(machine->tlb[i]);
         }
     }
@@ -245,6 +245,7 @@ void AddrSpace::RestoreState()
 {
 #ifdef USE_TLB
     // Limpio la tlb
+    DEBUG('f', "Limpio TLB!\n");
     int i;
     for(i = 0; i < TLBSize; i++) {
         machine->tlb[i].valid = false;
