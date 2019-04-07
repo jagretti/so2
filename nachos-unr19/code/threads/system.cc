@@ -43,7 +43,7 @@ SynchDisk *synchDisk;
 Machine *machine;              ///< User program memory and registers.
 Bitmap *userProgramFrameTable; ///< User program physical memory frame table.
 SynchConsole *sconsole;
-// Thread **procTable;
+Thread **procTable;
 #endif
 
 #ifdef NETWORK
@@ -185,6 +185,8 @@ Initialize(int argc, char **argv)
     Debugger *d = debugUserProg ? new Debugger : nullptr;
     machine = new Machine(d);  // This must come first.
     userProgramFrameTable = new Bitmap(NUM_PHYS_PAGES);
+    sconsole = new SynchConsole(nullptr, nullptr);
+    procTable = new Thread*[MAX_PROCESS];
     SetExceptionHandlers();
 #endif
 
@@ -217,6 +219,8 @@ Cleanup()
 #ifdef USER_PROGRAM
     delete machine;
     delete userProgramFrameTable;
+    delete sconsole;
+    delete procTable;
 #endif
 
 #ifdef FILESYS_NEEDED

@@ -15,7 +15,8 @@
 #include "machine/interrupt.hh"
 #include "machine/statistics.hh"
 #include "machine/timer.hh"
-#include "userprog/synch_console.hh"
+
+#define MAX_PROCESS 100
 
 /// Initialization and cleanup routines.
 
@@ -36,9 +37,11 @@ extern Timer *timer;                 ///< The hardware alarm clock.
 #ifdef USER_PROGRAM
 #include "machine/machine.hh"
 #include "lib/bitmap.hh"
+#include "userprog/synch_console.hh"
 extern Machine *machine;  // User program memory and registers.
 extern Bitmap *userProgramFrameTable;
 extern SynchConsole *sconsole;
+extern Thread **procTable;
 #endif
 
 #ifdef FILESYS_NEEDED  // *FILESYS* or *FILESYS_STUB*.

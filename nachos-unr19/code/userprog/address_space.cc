@@ -79,6 +79,9 @@ AddressSpace::AddressSpace(OpenFile *executable)
       // Check we are not trying to run anything too big -- at least until we
       // have virtual memory.
 
+    //
+    isValid = numPages <= userProgramFrameTable->CountClear();
+
     DEBUG('a', "Initializing address space, num pages %u, size %u\n",
           numPages, size);
 
@@ -173,4 +176,10 @@ AddressSpace::RestoreState()
 {
     machine->GetMMU()->pageTable     = pageTable;
     machine->GetMMU()->pageTableSize = numPages;
+}
+
+bool
+AddressSpace::IsValid()
+{
+    return this->isValid;
 }

@@ -8,7 +8,7 @@
 #define SYNCHCONSOLE_H
 
 #include "machine/console.hh"
-#include "synch.hh"
+#include "threads/synch.hh"
 
 // La clase provee una abstraccion de
 // accesso sincronizado a la consola

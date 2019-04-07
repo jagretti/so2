@@ -37,9 +37,11 @@ public:
     void InitRegisters();
 
     /// Save/restore address space-specific info on a context switch.
-
     void SaveState();
     void RestoreState();
+
+    // Return true if there is enough memory to save and excecute the process.
+    bool IsValid();
 
 private:
 
@@ -48,6 +50,9 @@ private:
 
     /// Number of pages in the virtual address space.
     unsigned numPages;
+
+    ///
+    bool isValid;
 
 };
 

@@ -26,6 +26,7 @@
 #include "syscall.h"
 #include "filesys/directory_entry.hh"
 #include "threads/system.hh"
+#include "args.hh"
 
 //---------------------------------------------------------------------
 // Funciones que leen y escriben en el espacio de usuario
@@ -71,6 +72,42 @@ writeBuffToUsr(char *str, int usrAddr, int byteCount)
         byteCount--;
         i++;
     }
+}
+
+
+//---------------------------------------------------------------------
+// Funciones que trabajan sobre la procTable
+//---------------------------------------------------------------------
+SpaceId
+getNextId(Thread *t)
+{
+    for(int i = 0; i < MAX_PROCESS; i++) {
+        if (procTable[i] == NULL) {
+            procTable[i] = t;
+            return i;
+        }
+    }
+    return -1;
+}
+
+void
+freeId(SpaceId id)
+{
+    if (id < MAX_PROCESS and id > 0) {
+        procTable[id] = NULL;
+    }
+}
+
+//---------------------------------------------------------------------
+// Funcion a forkear en un nuevo thread, inicia los registros en el espacio
+// de direcciones y escribe los argumentos de lo que se ejecuta
+//---------------------------------------------------------------------
+void beginProcess(void *args)
+{
+    currentThread->space->InitRegisters();
+    currentThread->space->RestoreState();
+    WriteArgs((char **) args);
+    machine->Run();
 }
 
 static void

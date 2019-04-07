@@ -4,7 +4,7 @@
 
 
 #include "transfer.hh"
-#include "machine/machine.h"
+#include "machine/machine.hh"
 
 
 const unsigned MAX_ARG_COUNT  = 32;
