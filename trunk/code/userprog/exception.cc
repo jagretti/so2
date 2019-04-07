@@ -147,7 +147,28 @@ void beginProcess(void *args)
 //---------------------------------------------------------------------
 // Guarda en la TLB la referencia a esa entrada de la pageTable
 //---------------------------------------------------------------------
-int SaveInTLB(TranslationEntry toSave)
+int SaveInTLB(TranslationEntry toSave, int position)
+{
+    DEBUG('f', "Guardo en la tlb position %d\n", position);
+    TranslationEntry entry = machine->tlb[position];
+    if(entry.valid) {
+        if(entry.dirty) {
+            currentThread->space->SaveEntry(entry);
+        }
+    }
+    machine->tlb[position] = toSave;
+    return 1;
+}
+
+void printTLB()
+{
+    for(int i = 0; i < TLBSize; i++) {
+        printf("TLB[%d] -- ", i);
+        printf("physical: %d virtual: %d dirty: %d valid: %d\n", machine->tlb[i].physicalPage, machine->tlb[i].virtualPage, machine->tlb[i].dirty, machine->tlb[i].valid);
+    }
+}
+
+int SaveInTLB_old(TranslationEntry toSave)
 {
     int position = -1;
     int i = 0;
@@ -374,13 +395,16 @@ ExceptionHandler(ExceptionType which)
             }
         }
     } else if(which == PageFaultException) {
+        static int position = 0;
         int virtualAddr = machine->ReadRegister(BadVAddrReg);
         int virtualPage = virtualAddr / PageSize;
         int offset = virtualAddr % PageSize;
         DEBUG('a', "PageFault de pagina %d\n", virtualPage); 
         // Busco la entrada en el espacio de direcciones del thread actual
         TranslationEntry entry = currentThread->space->GetEntry(virtualPage);
-        SaveInTLB(entry);
+        SaveInTLB(entry, position);
+        position = (position + 1) % TLBSize;
+        printTLB();
         machine->WriteRegister(2, 1); 
     } else {
 	    printf("Unexpected user mode exception %d %d\n", which, type);
