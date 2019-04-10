@@ -21,4 +21,34 @@ bool ReadStringFromUser(int userAddress, char *outString,
     return *(outString - 1) == '\0';
 }
 
-// TODO: complete...
+void
+ReadBufferFromUser(int usrAddr, char *outBuff, unsigned byteCount)
+{
+    int c, i = 0;
+    while (byteCount > 0) {
+        ASSERT(machine->ReadMem(usrAddr+i,1,&c));
+        outBuff[i++] = c;
+        byteCount--;
+    }
+}
+
+void
+WriteStringToUser(const char *str, int usrAddr)
+{
+    int c, i = 0;
+    while ((c = str[i]) != '\0') {
+        ASSERT(machine->WriteMem(usrAddr+i,1,c));
+        i++;
+    }
+}
+
+void
+WriteBuffeToUser(char *str, int usrAddr, int byteCount)
+{
+    int i = 0;
+    while (byteCount > 0) {
+        ASSERT(machine -> WriteMem(usrAddr+i,1,str[i]));
+        byteCount--;
+        i++;
+    }
+}
