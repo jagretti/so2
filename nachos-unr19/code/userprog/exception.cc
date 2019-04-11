@@ -31,8 +31,8 @@
 //---------------------------------------------------------------------
 // Funciones que leen y escriben en el espacio de usuario
 //---------------------------------------------------------------------
-void
-readStrFromUser(int usrAddr, char *outStr, unsigned byteCount)
+/*void
+ReadStringFromUser(int usrAddr, char *outStr, unsigned byteCount)
 {
     int i = 0, c;
     if (byteCount < 1) return;
@@ -43,7 +43,7 @@ readStrFromUser(int usrAddr, char *outStr, unsigned byteCount)
 }
 
 void
-readBuffFromUsr(int usrAddr, char *outBuff, int byteCount)
+ReadBufferFromUser(int usrAddr, char *outBuff, int byteCount)
 {
     int c, i = 0;
     while (byteCount > 0) {
@@ -54,7 +54,7 @@ readBuffFromUsr(int usrAddr, char *outBuff, int byteCount)
 }
 
 void
-writeStrToUsr(char *str, int usrAddr)
+WriteStringToUser(char *str, int usrAddr)
 {
     int c, i = 0;
     while ((c = str[i]) != '\0') {
@@ -64,7 +64,7 @@ writeStrToUsr(char *str, int usrAddr)
 }
 
 void
-writeBuffToUsr(char *str, int usrAddr, int byteCount)
+WriteBufferToUser(char *str, int usrAddr, int byteCount)
 {
     int i = 0;
     while (byteCount > 0) {
@@ -73,7 +73,7 @@ writeBuffToUsr(char *str, int usrAddr, int byteCount)
         i++;
     }
 }
-
+*/
 
 //---------------------------------------------------------------------
 // Funciones que trabajan sobre la procTable
@@ -163,6 +163,7 @@ SyscallHandler(ExceptionType _et)
     case SC_HALT: {
         DEBUG('a', "Shutdown, initiated by user program.\n");
         interrupt->Halt();
+        IncrementPC();
         break;
     }
 
@@ -185,6 +186,24 @@ SyscallHandler(ExceptionType _et)
             DEBUG('a', "Error creando el archivo %s \n", filename);
             machine->WriteRegister(2, -1);
         }
+        IncrementPC();
+        break;
+    }
+
+    case SC_OPEN: {
+        char *name = new char[128];
+        ReadStringFromUser(machine->ReadRegister(4),name, 128);
+        OpenFile *f = fileSystem->Open(name);
+        if (f == NULL) {
+            DEBUG('a', "Archivo con nombre %s vacio\n", name);
+            machine->WriteRegister(2, -1);
+        } else {
+            int fd = currentThread->AddFile(f);
+            machine->WriteRegister(2, fd);
+            DEBUG('a', "Se abrio archivo con nombre %s y fd %d\n", name, fd);
+        }
+        IncrementPC();
+        delete []name;
         break;
     }
 
@@ -198,6 +217,7 @@ SyscallHandler(ExceptionType _et)
             currentThread->CloseFile(fid);
             DEBUG('a', "Se cerro archivo con fd %d", fid);
         }
+        IncrementPC();
         break;
     }
 
@@ -212,7 +232,7 @@ SyscallHandler(ExceptionType _et)
             break;
         } else {
             if (fd == 1) { // Escribe en stdout
-                readBuffFromUsr(machine->ReadRegister(4), buff, size);
+                ReadBufferFromUser(machine->ReadRegister(4), buff, size);
                 for(int i = 0; i < size; i++) {
                     sconsole->WriteChar(buff[i]);
                 }
@@ -227,13 +247,14 @@ SyscallHandler(ExceptionType _et)
                 }
                 // Leo del espacio de usuario el string a escribir
                 int arg = machine->ReadRegister(4);
-                readStrFromUser(arg, buff, size);
+                ReadStringFromUser(arg, buff, size);
                 size = strlen(buff);
                 DEBUG('a', "Escribo en archivo %d\n", fd);
                 write = f->Write((const char*)buff, size);
             }
         }
         machine->WriteRegister(2, write);
+        IncrementPC();
         delete []buff;
         break;
     }
@@ -254,7 +275,7 @@ SyscallHandler(ExceptionType _et)
                     c = sconsole->ReadChar();
                     buff[i] = c;
                 }
-                writeBuffToUsr(buff, machine->ReadRegister(4), size);
+                WriteBufferToUser(buff, machine->ReadRegister(4), size);
                 read = size - 1;
             } else {
                 OpenFile *f = currentThread->GetFile(fd);
@@ -264,11 +285,12 @@ SyscallHandler(ExceptionType _et)
                     break;
                 }
                 read = f->Read(buff, size);
-                writeBuffToUsr(buff, machine->ReadRegister(4),read);
+                WriteBufferToUser(buff, machine->ReadRegister(4),read);
             }
         }
         machine->WriteRegister(2,read);
         DEBUG('a', "Leo en archivo %d\n", fd);
+        IncrementPC();
         delete []buff;
         break;
     }
@@ -277,6 +299,7 @@ SyscallHandler(ExceptionType _et)
         int s = machine->ReadRegister(4);
         currentThread->exitStatus = s;
         currentThread->Finish();
+        IncrementPC();
         break;
     }
     case SC_JOIN:{
@@ -284,13 +307,14 @@ SyscallHandler(ExceptionType _et)
         Thread *t = procTable[id];
         t->Join();
         machine->WriteRegister(2, 0);
+        IncrementPC();
         break;
     }
     case SC_EXEC:{
         char *path = new char[128];
         int name_addr = machine->ReadRegister(4);
         int args_addr = machine->ReadRegister(5);
-        readStrFromUser(name_addr, path, 128);
+        ReadStringFromUser(name_addr, path, 128);
         OpenFile *executable = fileSystem->Open(path);
         if (executable == NULL) {
             delete []path;
@@ -314,6 +338,7 @@ SyscallHandler(ExceptionType _et)
         //
         t->Fork(beginProcess, args);
         machine->WriteRegister(2, id);
+        IncrementPC();
         delete []path;
         break;
     }

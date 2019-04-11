@@ -16,7 +16,7 @@ bool ReadStringFromUser(int userAddress, char *outString,
                         unsigned maxByteCount);
 
 /// Copy a byte array from host to virtual machine.
-void WriteBufferToUser(const char *buffer, unsigned byteCount);
+void WriteBufferToUser(const char *buffer, int userAddress, unsigned int byteCount);
 
 /// Copy a C string from host to virtual machine.
 void WriteStringToUser(const char *string, int userAddress);

@@ -43,11 +43,11 @@ WriteStringToUser(const char *str, int usrAddr)
 }
 
 void
-WriteBuffeToUser(char *str, int usrAddr, int byteCount)
+WriteBufferToUser(const char *str, int userAddress, unsigned int byteCount)
 {
     int i = 0;
     while (byteCount > 0) {
-        ASSERT(machine -> WriteMem(usrAddr+i,1,str[i]));
+        ASSERT(machine -> WriteMem(userAddress+i,1,str[i]));
         byteCount--;
         i++;
     }
