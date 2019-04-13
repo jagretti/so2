@@ -59,7 +59,10 @@ void beginProcess(void *args)
 {
     currentThread->space->InitRegisters();
     currentThread->space->RestoreState();
-    WriteArgs((char **) args);
+    int argc = WriteArgs((char **) args);
+    machine->WriteRegister(4, argc);
+    int argv = (machine->ReadRegister(STACK_REG)) + 16;
+    machine->WriteRegister(5, argv);
     machine->Run();
 }
 

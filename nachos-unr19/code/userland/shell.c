@@ -113,7 +113,6 @@ main(void)
             WriteError("too many arguments.", OUTPUT);
             continue;
         }
-        Write(line, sizeof line - 1, OUTPUT);
 
         // Comment and uncomment according to whether command line arguments
         // are given in the system call or not.

@@ -99,7 +99,7 @@ AddressSpace::AddressSpace(OpenFile *executable)
           // If the code segment was entirely on a separate page, we could
           // set its pages to be read-only.
         // Zero out the physical address space
-        memset(&mainMemory[pageTable[i].physicalPage * PAGE_SIZE], 0, PAGE_SIZE);
+        memset(&(mainMemory[pageTable[i].physicalPage * PAGE_SIZE]), 0, PAGE_SIZE);
     }
 
     // Then, copy in the code and data segments into memory.

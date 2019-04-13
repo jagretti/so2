@@ -2,7 +2,7 @@
 
 int main(int argc, char** argv)
 {
-  if (argc < 2) Exit(1);
+  //if (argc < 2) Exit(1);
   OpenFileId output = CONSOLE_OUTPUT;
   OpenFileId input =  Open(argv[1]);
   char buff[1];

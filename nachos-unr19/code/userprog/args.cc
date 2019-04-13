@@ -43,7 +43,7 @@ SaveArgs(int address)
     return ret;
 }
 
-void
+int
 WriteArgs(char **args)
 {
     ASSERT(args != nullptr);
@@ -75,4 +75,5 @@ WriteArgs(char **args)
 
     machine->WriteRegister(STACK_REG, sp);
     delete args;  // Free the array.
+    return i;
 }
