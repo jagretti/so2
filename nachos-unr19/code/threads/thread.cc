@@ -46,6 +46,9 @@ Thread::Thread(const char *threadName, int threadPriority, bool willJoin)
     status   = JUST_CREATED;
     priority = threadPriority;
     useJoin = willJoin;
+    if(useJoin) {
+        joinPort = new Port("Join Port");
+    }
 #ifdef USER_PROGRAM
     space    = nullptr;
 #endif
@@ -157,6 +160,10 @@ Thread::Print() const
 void
 Thread::Finish()
 {
+#ifdef USER_PROGRAM
+    if(useJoin)
+        joinPort->Send(currentThread->exitStatus);
+#endif
     interrupt->SetLevel(INT_OFF);
     ASSERT(this == currentThread);
 

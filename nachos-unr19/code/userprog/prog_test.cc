@@ -87,3 +87,18 @@ ConsoleTest(const char *in, const char *out)
             return;  // If `q`, then quit.
     }
 }
+
+/// Test the console by echoing characters typed at the input onto the
+/// output.
+///
+/// Stop when the user types a `q`.
+void
+SynchConsoleTest(const char *in, const char *out)
+{
+    for (;;) {
+        char ch = sconsole->ReadChar();
+        sconsole->WriteChar(ch);  // Echo it!
+        if (ch == 'q')
+            return;  // If `q`, then quit.
+    }
+}

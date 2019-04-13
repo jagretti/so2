@@ -76,6 +76,7 @@ void Print(const char *file);
 void PerformanceTest(void);
 void StartProcess(const char *file);
 void ConsoleTest(const char *in, const char *out);
+void SynchConsoleTest(const char *in, const char *out);
 void MailTest(int networkID);
 
 static inline void
@@ -118,7 +119,8 @@ main(int argc, char **argv)
             argCount = 2;
         } else if (!strcmp(*argv, "-tc")) {  // Test the console.
             if (argc == 1)
-                ConsoleTest(nullptr, nullptr);
+                SynchConsoleTest(nullptr, nullptr);
+                //ConsoleTest(nullptr, nullptr);
             else {
                 ASSERT(argc > 2);
                 ConsoleTest(*(argv + 1), *(argv + 2));

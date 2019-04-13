@@ -113,11 +113,12 @@ main(void)
             WriteError("too many arguments.", OUTPUT);
             continue;
         }
+        Write(line, sizeof line - 1, OUTPUT);
 
         // Comment and uncomment according to whether command line arguments
         // are given in the system call or not.
-        const SpaceId newProc = Exec(line);
-        //const SpaceId newProc = Exec(line, argv);
+        //const SpaceId newProc = Exec(line);
+        const SpaceId newProc = Exec(line, argv);
 
         // TO DO: check for errors when calling `Exec`; this depends on how
         //        errors are reported.

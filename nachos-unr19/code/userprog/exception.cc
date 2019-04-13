@@ -29,53 +29,6 @@
 #include "args.hh"
 
 //---------------------------------------------------------------------
-// Funciones que leen y escriben en el espacio de usuario
-//---------------------------------------------------------------------
-/*void
-ReadStringFromUser(int usrAddr, char *outStr, unsigned byteCount)
-{
-    int i = 0, c;
-    if (byteCount < 1) return;
-    do {
-        ASSERT(machine->ReadMem(usrAddr+i,1,&c));
-        outStr[i] = c;
-    } while (outStr[i++] != '\0' && i < byteCount);
-}
-
-void
-ReadBufferFromUser(int usrAddr, char *outBuff, int byteCount)
-{
-    int c, i = 0;
-    while (byteCount > 0) {
-        ASSERT(machine->ReadMem(usrAddr+i,1,&c));
-        outBuff[i++] = c;
-        byteCount--;
-    }
-}
-
-void
-WriteStringToUser(char *str, int usrAddr)
-{
-    int c, i = 0;
-    while ((c = str[i]) != '\0') {
-        ASSERT(machine->WriteMem(usrAddr+i,1,c));
-        i++;
-    }
-}
-
-void
-WriteBufferToUser(char *str, int usrAddr, int byteCount)
-{
-    int i = 0;
-    while (byteCount > 0) {
-        ASSERT(machine -> WriteMem(usrAddr+i,1,str[i]));
-        byteCount--;
-        i++;
-    }
-}
-*/
-
-//---------------------------------------------------------------------
 // Funciones que trabajan sobre la procTable
 //---------------------------------------------------------------------
 SpaceId
@@ -163,7 +116,6 @@ SyscallHandler(ExceptionType _et)
     case SC_HALT: {
         DEBUG('a', "Shutdown, initiated by user program.\n");
         interrupt->Halt();
-        IncrementPC();
         break;
     }
 
@@ -172,7 +124,7 @@ SyscallHandler(ExceptionType _et)
         if (filenameAddr == 0)
             DEBUG('a', "Error: address to filename string is null.\n");
 
-        char filename[FILE_NAME_MAX_LEN + 1];
+        char *filename = new char[FILE_NAME_MAX_LEN + 1];
         if (!ReadStringFromUser(filenameAddr, filename, sizeof filename))
             DEBUG('a', "Error: filename string too long (maximum is %u bytes).\n",
                   FILE_NAME_MAX_LEN);
@@ -186,7 +138,26 @@ SyscallHandler(ExceptionType _et)
             DEBUG('a', "Error creando el archivo %s \n", filename);
             machine->WriteRegister(2, -1);
         }
-        IncrementPC();
+        delete []filename;
+        break;
+    }
+
+    case SC_REMOVE: {
+        /*
+        int fileNameAddr = machine->ReadRegister(4);
+        if (fileNameAddr == 0)
+            DEBUG('a', "Error: address to filename string is null\n");
+        char *filename = new char[FILE_NAME_MAX_LEN + 1]; 
+        ReadStringFromUser(fileNameAddr, filename, FILE_NAME_MAX_LEN);
+        bool remove_ok = fileSystem->Remove(filename);
+        if (!remove_ok) {
+            DEBUG('a', "Error borrando el archivo %s\n", filename);
+            machine->WriteRegister(2, -1);
+        } else {
+            DEBUG('a', "Se borro el archivo %s correctamente\n", filename);
+        }
+        delete []filename;
+        */
         break;
     }
 
@@ -202,7 +173,6 @@ SyscallHandler(ExceptionType _et)
             machine->WriteRegister(2, fd);
             DEBUG('a', "Se abrio archivo con nombre %s y fd %d\n", name, fd);
         }
-        IncrementPC();
         delete []name;
         break;
     }
@@ -217,7 +187,6 @@ SyscallHandler(ExceptionType _et)
             currentThread->CloseFile(fid);
             DEBUG('a', "Se cerro archivo con fd %d", fid);
         }
-        IncrementPC();
         break;
     }
 
@@ -254,7 +223,6 @@ SyscallHandler(ExceptionType _et)
             }
         }
         machine->WriteRegister(2, write);
-        IncrementPC();
         delete []buff;
         break;
     }
@@ -290,7 +258,6 @@ SyscallHandler(ExceptionType _et)
         }
         machine->WriteRegister(2,read);
         DEBUG('a', "Leo en archivo %d\n", fd);
-        IncrementPC();
         delete []buff;
         break;
     }
@@ -299,7 +266,6 @@ SyscallHandler(ExceptionType _et)
         int s = machine->ReadRegister(4);
         currentThread->exitStatus = s;
         currentThread->Finish();
-        IncrementPC();
         break;
     }
     case SC_JOIN:{
@@ -307,13 +273,14 @@ SyscallHandler(ExceptionType _et)
         Thread *t = procTable[id];
         t->Join();
         machine->WriteRegister(2, 0);
-        IncrementPC();
         break;
     }
     case SC_EXEC:{
         char *path = new char[128];
         int name_addr = machine->ReadRegister(4);
         int args_addr = machine->ReadRegister(5);
+        //int args_addr = 2232;
+        DEBUG('k', "Direccion de path %d Direccion de args %d\n", name_addr, args_addr);
         ReadStringFromUser(name_addr, path, 128);
         OpenFile *executable = fileSystem->Open(path);
         if (executable == NULL) {
@@ -338,7 +305,6 @@ SyscallHandler(ExceptionType _et)
         //
         t->Fork(beginProcess, args);
         machine->WriteRegister(2, id);
-        IncrementPC();
         delete []path;
         break;
     }
