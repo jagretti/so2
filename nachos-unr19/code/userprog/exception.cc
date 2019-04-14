@@ -353,7 +353,6 @@ PageFaultHandler(ExceptionType et)
     SaveInTLB(entry, position);
     position = (position + 1) % TLB_SIZE;
     // printTLB();
-    machine->WriteRegister(2, 1);
 }
 
 /// By default, only system calls have their own handler.  All other
