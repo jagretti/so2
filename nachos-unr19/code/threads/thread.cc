@@ -69,6 +69,8 @@ Thread::~Thread()
     ASSERT(this != currentThread);
     if (stack != nullptr)
         DeallocBoundedArray((char *) stack, STACK_SIZE * sizeof *stack);
+
+    delete this->space;
 }
 
 /// Invoke `(*func)(arg)`, allowing caller and callee to execute

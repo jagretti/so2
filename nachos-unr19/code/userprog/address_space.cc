@@ -129,6 +129,9 @@ AddressSpace::AddressSpace(OpenFile *executable)
 /// Nothing for now!
 AddressSpace::~AddressSpace()
 {
+    for (unsigned i = 0; i < numPages; i++) {
+        userProgramFrameTable->Clear(pageTable[i].physicalPage);
+    }
     delete [] pageTable;
 }
 
