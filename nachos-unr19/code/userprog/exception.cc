@@ -35,7 +35,7 @@ SpaceId
 getNextId(Thread *t)
 {
     for(int i = 0; i < MAX_PROCESS; i++) {
-        if (procTable[i] == NULL) {
+        if (procTable[i] == nullptr) {
             procTable[i] = t;
             return i;
         }
@@ -43,11 +43,12 @@ getNextId(Thread *t)
     return -1;
 }
 
+// TODO
 void
 freeId(SpaceId id)
 {
     if (id < MAX_PROCESS and id > 0) {
-        procTable[id] = NULL;
+        procTable[id] = nullptr;
     }
 }
 
@@ -67,6 +68,29 @@ void beginProcess(void *args)
     machine->WriteRegister(5, argv);
     machine->Run();
 }
+
+//---------------------------------------------------------------------
+// Guarda en la TLB la referencia a esa entrada de la pageTable
+//---------------------------------------------------------------------
+int SaveInTLB(TranslationEntry toSave, int position)
+{
+    DEBUG('f', "Guardo en la tlb position %d\n", position);
+    TranslationEntry entry = machine->GetMMU()->tlb[position];
+    if(entry.valid && entry.dirty) {
+        currentThread->space->SaveEntry(entry);
+    }
+    machine->GetMMU()->tlb[position] = toSave;
+    return 1;
+}
+
+void printTLB()
+{
+    for(unsigned i = 0; i < TLB_SIZE; i++) {
+        printf("TLB[%d] -- ", i);
+        printf("physical: %d virtual: %d dirty: %d valid: %d\n", machine->GetMMU()->tlb[i].physicalPage, machine->GetMMU()->tlb[i].virtualPage, machine->GetMMU()->tlb[i].dirty, machine->GetMMU()->tlb[i].valid);
+    }
+}
+
 
 static void
 IncrementPC()
@@ -285,7 +309,7 @@ SyscallHandler(ExceptionType _et)
         DEBUG('k', "Direccion de path %d Direccion de args %d\n", name_addr, args_addr);
         ReadStringFromUser(name_addr, path, 128);
         OpenFile *executable = fileSystem->Open(path);
-        if (executable == NULL) {
+        if (executable == nullptr) {
             machine->WriteRegister(2, -1);
             delete []path;
             break;
@@ -304,6 +328,7 @@ SyscallHandler(ExceptionType _et)
         int id = getNextId(t);
         char **args = SaveArgs(args_addr);
         t->Fork(beginProcess, args);
+        DEBUG('k', "Ejecutar  %s args[1] %s\n", args[0], args[1]);
         machine->WriteRegister(2, id);
         delete []path;
         break;
@@ -317,6 +342,19 @@ SyscallHandler(ExceptionType _et)
     IncrementPC();
 }
 
+static void
+PageFaultHandler(ExceptionType et)
+{
+    static int position = 0;
+    int virtualAddr = machine->ReadRegister(BAD_VADDR_REG);
+    int virtualPage = virtualAddr / PAGE_SIZE;
+    // Busco la entrada en el espacio de direcciones del thread actual
+    TranslationEntry entry = currentThread->space->GetEntry(virtualPage);
+    SaveInTLB(entry, position);
+    position = (position + 1) % TLB_SIZE;
+    // printTLB();
+    machine->WriteRegister(2, 1);
+}
 
 /// By default, only system calls have their own handler.  All other
 /// exception types are assigned the default handler.
@@ -325,7 +363,7 @@ SetExceptionHandlers()
 {
     machine->SetHandler(NO_EXCEPTION,            &DefaultHandler);
     machine->SetHandler(SYSCALL_EXCEPTION,       &SyscallHandler);
-    machine->SetHandler(PAGE_FAULT_EXCEPTION,    &DefaultHandler);
+    machine->SetHandler(PAGE_FAULT_EXCEPTION,    &PageFaultHandler);
     machine->SetHandler(READ_ONLY_EXCEPTION,     &DefaultHandler);
     machine->SetHandler(BUS_ERROR_EXCEPTION,     &DefaultHandler);
     machine->SetHandler(ADDRESS_ERROR_EXCEPTION, &DefaultHandler);

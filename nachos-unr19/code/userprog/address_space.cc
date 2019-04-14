@@ -177,12 +177,39 @@ AddressSpace::SaveState()
 void
 AddressSpace::RestoreState()
 {
+#ifdef USE_TLB
+    // Limpio la tlb
+    DEBUG('f', "Limpio TLB!\n");
+    for(unsigned i = 0; i < TLB_SIZE; i++) {
+        machine->GetMMU()->tlb[i].valid = false;
+    }
+#else
     machine->GetMMU()->pageTable     = pageTable;
     machine->GetMMU()->pageTableSize = numPages;
+#endif
+
 }
 
 bool
 AddressSpace::IsValid()
 {
     return this->isValid;
+}
+
+
+//----------------------------------------------------------------------
+// Obtener la i-esima posicion de la pageTable asociada
+// al espacio de direcciones del thread
+//----------------------------------------------------------------------
+TranslationEntry
+AddressSpace::GetEntry(int virtualPageIndex)
+{
+    return this->pageTable[virtualPageIndex];
+}
+
+void
+AddressSpace::SaveEntry(TranslationEntry toSave)
+{
+    int vpn = toSave.virtualPage;
+    this->pageTable[vpn] = toSave;
 }

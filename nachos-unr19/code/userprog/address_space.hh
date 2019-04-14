@@ -43,6 +43,11 @@ public:
     // Return true if there is enough memory to save and excecute the process.
     bool IsValid();
 
+    // Retorna la entrada correspondiente a esa pagina virtual.
+    TranslationEntry GetEntry(int virtualPageIndex);
+
+    // Guarda la entrada en la pageTable del proceso.
+    void SaveEntry(TranslationEntry toSave);
 private:
 
     /// Assume linear page table translation for now!
