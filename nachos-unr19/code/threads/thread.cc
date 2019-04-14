@@ -160,10 +160,8 @@ Thread::Print() const
 void
 Thread::Finish()
 {
-#ifdef USER_PROGRAM
     if(useJoin)
         joinPort->Send(currentThread->exitStatus);
-#endif
     interrupt->SetLevel(INT_OFF);
     ASSERT(this == currentThread);
 
@@ -338,7 +336,7 @@ Thread::RestoreUserState()
 int
 Thread::AddFile(OpenFile *f)
 {
-    for(int i = 2; i < MAX_FILES; i++) { //El 0 y 1 son stdin y stdout
+    for(unsigned i = 2; i < MAX_FILES; i++) { //El 0 y 1 son stdin y stdout
     	if (files[i] == NULL) {
     		files[i] = f;
     		return i;
@@ -348,7 +346,7 @@ Thread::AddFile(OpenFile *f)
 }
 
 void
-Thread::CloseFile(int f)
+Thread::CloseFile(unsigned f)
 {
 	if (f < MAX_FILES && f > 1) {
 		files[f] = NULL;
@@ -356,7 +354,7 @@ Thread::CloseFile(int f)
 }
 
 OpenFile*
-Thread::GetFile(int f)
+Thread::GetFile(unsigned f)
 {
 	if (f < MAX_FILES && f > 1) {
 		return files[f];

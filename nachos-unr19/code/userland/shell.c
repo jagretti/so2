@@ -118,9 +118,14 @@ main(void)
         // are given in the system call or not.
         //const SpaceId newProc = Exec(line);
         const SpaceId newProc = Exec(line, argv);
-
-        // TO DO: check for errors when calling `Exec`; this depends on how
-        //        errors are reported.
+        // Checking for errors in Exec
+        if (newProc == -1) {
+            WriteError("executable not found.", OUTPUT);
+            continue;
+        } else if (newProc == -2) {
+            WriteError("program too big to be runned.", OUTPUT);
+            continue;
+        }
 
         Join(newProc);
         // TO DO: is it necessary to check for errors after `Join` too, or

@@ -59,8 +59,10 @@ void beginProcess(void *args)
 {
     currentThread->space->InitRegisters();
     currentThread->space->RestoreState();
+    // Escribo argc en el registro 4
     int argc = WriteArgs((char **) args);
     machine->WriteRegister(4, argc);
+    // Escribo argv en el registro 5 (sumo 16 por que WriteArgs antes de retornar los resta!
     int argv = (machine->ReadRegister(STACK_REG)) + 16;
     machine->WriteRegister(5, argv);
     machine->Run();
@@ -146,7 +148,6 @@ SyscallHandler(ExceptionType _et)
     }
 
     case SC_REMOVE: {
-        /*
         int fileNameAddr = machine->ReadRegister(4);
         if (fileNameAddr == 0)
             DEBUG('a', "Error: address to filename string is null\n");
@@ -160,7 +161,6 @@ SyscallHandler(ExceptionType _et)
             DEBUG('a', "Se borro el archivo %s correctamente\n", filename);
         }
         delete []filename;
-        */
         break;
     }
 
@@ -282,11 +282,11 @@ SyscallHandler(ExceptionType _et)
         char *path = new char[128];
         int name_addr = machine->ReadRegister(4);
         int args_addr = machine->ReadRegister(5);
-        //int args_addr = 2232;
         DEBUG('k', "Direccion de path %d Direccion de args %d\n", name_addr, args_addr);
         ReadStringFromUser(name_addr, path, 128);
         OpenFile *executable = fileSystem->Open(path);
         if (executable == NULL) {
+            machine->WriteRegister(2, -1);
             delete []path;
             break;
         }
@@ -295,6 +295,7 @@ SyscallHandler(ExceptionType _et)
         if (!addr->IsValid()) { // El espacio de direcciones no es valido!
             t->exitStatus = 0;
             t->Finish();
+            machine->WriteRegister(2, -2);
             delete addr;
             delete []path;
             break;
@@ -302,10 +303,6 @@ SyscallHandler(ExceptionType _et)
         t->space = addr;
         int id = getNextId(t);
         char **args = SaveArgs(args_addr);
-        // imprimo todos los argumentos a escribir;
-        //int i = 0;
-        //while(args[i] != NULL) printf("args > %s \n",args[i++]);
-        //
         t->Fork(beginProcess, args);
         machine->WriteRegister(2, id);
         delete []path;

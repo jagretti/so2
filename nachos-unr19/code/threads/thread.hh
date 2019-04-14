@@ -179,9 +179,9 @@ public:
 
     int AddFile(OpenFile *f);
 
-    void CloseFile(int f);
+    void CloseFile(unsigned f);
 
-    OpenFile* GetFile(int f);
+    OpenFile* GetFile(unsigned f);
 #endif
 };
 
