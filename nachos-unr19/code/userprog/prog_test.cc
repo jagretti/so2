@@ -31,6 +31,7 @@ StartProcess(const char *filename)
 
     AddressSpace *space = new AddressSpace(executable);
     currentThread->space = space;
+    getNextId(currentThread);
 
     delete executable;
 

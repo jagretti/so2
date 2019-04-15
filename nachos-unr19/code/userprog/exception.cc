@@ -29,30 +29,6 @@
 #include "args.hh"
 
 //---------------------------------------------------------------------
-// Funciones que trabajan sobre la procTable
-//---------------------------------------------------------------------
-SpaceId
-getNextId(Thread *t)
-{
-    for(int i = 0; i < MAX_PROCESS; i++) {
-        if (procTable[i] == nullptr) {
-            procTable[i] = t;
-            return i;
-        }
-    }
-    return -1;
-}
-
-// TODO
-void
-freeId(SpaceId id)
-{
-    if (id < MAX_PROCESS and id > 0) {
-        procTable[id] = nullptr;
-    }
-}
-
-//---------------------------------------------------------------------
 // Funcion a forkear en un nuevo thread, inicia los registros en el espacio
 // de direcciones y escribe los argumentos de lo que se ejecuta
 //---------------------------------------------------------------------
@@ -345,12 +321,14 @@ SyscallHandler(ExceptionType _et)
 static void
 PageFaultHandler(ExceptionType et)
 {
+    // Posicion que va a ir la pagina en la tlb
     static int position = 0;
     int virtualAddr = machine->ReadRegister(BAD_VADDR_REG);
     int virtualPage = virtualAddr / PAGE_SIZE;
     // Busco la entrada en el espacio de direcciones del thread actual
     TranslationEntry entry = currentThread->space->GetEntry(virtualPage);
     SaveInTLB(entry, position);
+    // position varia entre 0,1,2,3 y asi sucesivamente haciendo un FIFO sobre la tlb
     position = (position + 1) % TLB_SIZE;
     // printTLB();
 }

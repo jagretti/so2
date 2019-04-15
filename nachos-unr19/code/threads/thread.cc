@@ -69,8 +69,9 @@ Thread::~Thread()
     ASSERT(this != currentThread);
     if (stack != nullptr)
         DeallocBoundedArray((char *) stack, STACK_SIZE * sizeof *stack);
-
+#ifdef USER_PROGRAM
     delete this->space;
+#endif
 }
 
 /// Invoke `(*func)(arg)`, allowing caller and callee to execute
@@ -162,8 +163,10 @@ Thread::Print() const
 void
 Thread::Finish()
 {
+#ifdef USER_PROGRAM
     if(useJoin)
         joinPort->Send(currentThread->exitStatus);
+#endif
     interrupt->SetLevel(INT_OFF);
     ASSERT(this == currentThread);
 

@@ -38,10 +38,14 @@ extern Timer *timer;                 ///< The hardware alarm clock.
 #include "machine/machine.hh"
 #include "lib/bitmap.hh"
 #include "userprog/synch_console.hh"
+#include "userprog/syscall.h"
 extern Machine *machine;  // User program memory and registers.
 extern Bitmap *userProgramFrameTable;
 extern SynchConsole *sconsole;
 extern Thread **procTable;
+
+extern SpaceId getNextId(Thread *t);
+extern void freeId(SpaceId id);
 #endif
 
 #ifdef FILESYS_NEEDED  // *FILESYS* or *FILESYS_STUB*.

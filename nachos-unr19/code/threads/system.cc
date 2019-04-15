@@ -203,6 +203,32 @@ Initialize(int argc, char **argv)
 #endif
 }
 
+#ifdef USER_PROGRAM
+//---------------------------------------------------------------------
+// Funciones que trabajan sobre la procTable
+//---------------------------------------------------------------------
+SpaceId
+getNextId(Thread *t)
+{
+    for(int i = 0; i < MAX_PROCESS; i++) {
+        if (procTable[i] == nullptr) {
+            procTable[i] = t;
+            return i;
+        }
+    }
+    return -1;
+}
+
+// TODO
+void
+freeId(SpaceId id)
+{
+    if (id < MAX_PROCESS and id > 0) {
+        procTable[id] = nullptr;
+    }
+}
+#endif
+
 /// Nachos is halting.  De-allocate global data structures.
 void
 Cleanup()
