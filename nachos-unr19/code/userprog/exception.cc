@@ -197,23 +197,20 @@ SyscallHandler(ExceptionType _et)
         int fd = machine->ReadRegister(6);
         int size = machine->ReadRegister(5);
         char *buff = new char[size];
-        int write = -1;
         if (fd == 0) { // Error - no se puede escribir en stdin
-            machine->WriteRegister(2, write);
             delete []buff;
             break;
         } else {
             if (fd == 1) { // Escribe en stdout
                 ReadBufferFromUser(machine->ReadRegister(4), buff, size);
+                size = strlen(buff);
                 for(int i = 0; i < size; i++) {
                     sconsole->WriteChar(buff[i]);
                 }
-                write = size - 1;
             } else {
                 OpenFile *f = currentThread->GetFile(fd);
-                if (f == NULL) {
+                if (f == nullptr) {
                     DEBUG('a', "El archivo %d no esta abierto", fd);
-                    machine->WriteRegister(2, write);
                     delete []buff;
                     break;
                 }
@@ -222,10 +219,9 @@ SyscallHandler(ExceptionType _et)
                 ReadStringFromUser(arg, buff, size);
                 size = strlen(buff);
                 DEBUG('a', "Escribo en archivo %d\n", fd);
-                write = f->Write((const char*)buff, size);
+                f->Write((const char*)buff, size);
             }
         }
-        machine->WriteRegister(2, write);
         delete []buff;
         break;
     }
