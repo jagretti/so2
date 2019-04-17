@@ -201,9 +201,9 @@ SyscallHandler(ExceptionType _et)
             delete []buff;
             break;
         } else {
+            int arg = machine->ReadRegister(4);
             if (fd == 1) { // Escribe en stdout
-                ReadBufferFromUser(machine->ReadRegister(4), buff, size);
-                size = strlen(buff);
+                ReadStringFromUser(arg, buff, size);
                 for(int i = 0; i < size; i++) {
                     sconsole->WriteChar(buff[i]);
                 }
@@ -215,7 +215,6 @@ SyscallHandler(ExceptionType _et)
                     break;
                 }
                 // Leo del espacio de usuario el string a escribir
-                int arg = machine->ReadRegister(4);
                 ReadStringFromUser(arg, buff, size);
                 size = strlen(buff);
                 DEBUG('a', "Escribo en archivo %d\n", fd);
