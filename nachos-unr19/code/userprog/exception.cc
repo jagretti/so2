@@ -168,7 +168,7 @@ SyscallHandler(ExceptionType _et)
         char *name = new char[128];
         ReadStringFromUser(machine->ReadRegister(4),name, 128);
         OpenFile *f = fileSystem->Open(name);
-        if (f == NULL) {
+        if (f == nullptr) {
             DEBUG('a', "Archivo con nombre %s vacio\n", name);
             machine->WriteRegister(2, -1);
         } else {
@@ -245,7 +245,7 @@ SyscallHandler(ExceptionType _et)
                 read = size - 1;
             } else {
                 OpenFile *f = currentThread->GetFile(fd);
-                if (f == NULL) {
+                if (f == nullptr) {
                     machine->WriteRegister(2, read);
                     delete []buff;
                     break;
@@ -309,7 +309,6 @@ SyscallHandler(ExceptionType _et)
         ASSERT(false);
 
     }
-
     IncrementPC();
 }
 
