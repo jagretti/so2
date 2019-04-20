@@ -63,7 +63,11 @@ void printTLB()
 {
     for(unsigned i = 0; i < TLB_SIZE; i++) {
         printf("TLB[%d] -- ", i);
-        printf("physical: %d virtual: %d dirty: %d valid: %d\n", machine->GetMMU()->tlb[i].physicalPage, machine->GetMMU()->tlb[i].virtualPage, machine->GetMMU()->tlb[i].dirty, machine->GetMMU()->tlb[i].valid);
+        printf("physical: %d virtual: %d dirty: %d valid: %d\n",
+               machine->GetMMU()->tlb[i].physicalPage,
+               machine->GetMMU()->tlb[i].virtualPage,
+               machine->GetMMU()->tlb[i].dirty,
+               machine->GetMMU()->tlb[i].valid);
     }
 }
 
