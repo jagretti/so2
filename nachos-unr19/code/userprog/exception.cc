@@ -198,10 +198,7 @@ SyscallHandler(ExceptionType _et)
         int fd = machine->ReadRegister(6);
         int size = machine->ReadRegister(5);
         char *buff = new char[size];
-        if (fd == 0) { // Error - no se puede escribir en stdin
-            delete []buff;
-            break;
-        } else {
+        if (fd != 0) { // Error (fd == 0) no se puede escribir en stdin
             int arg = machine->ReadRegister(4);
             if (fd == 1) { // Escribe en stdout
                 ReadStringFromUser(arg, buff, size);
