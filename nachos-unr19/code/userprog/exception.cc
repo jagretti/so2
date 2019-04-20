@@ -243,7 +243,7 @@ SyscallHandler(ExceptionType _et)
                 read = size - 1;
             } else {
                 OpenFile *f = currentThread->GetFile(fd);
-                if (f == NULL) {
+                if (f == nullptr) {
                     machine->WriteRegister(2, read);
                     delete []buff;
                     break;
@@ -252,7 +252,7 @@ SyscallHandler(ExceptionType _et)
                 WriteBufferToUser(buff, machine->ReadRegister(4),read);
             }
         }
-        machine->WriteRegister(2,read);
+        machine->WriteRegister(2, read);
         DEBUG('a', "Leo en archivo %d\n", fd);
         delete []buff;
         break;
