@@ -307,7 +307,6 @@ SyscallHandler(ExceptionType _et)
         ASSERT(false);
 
     }
-
     IncrementPC();
 }
 
