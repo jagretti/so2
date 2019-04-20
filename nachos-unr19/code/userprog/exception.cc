@@ -170,7 +170,7 @@ SyscallHandler(ExceptionType _et)
         char *name = new char[128];
         ReadStringFromUser(machine->ReadRegister(4),name, 128);
         OpenFile *f = fileSystem->Open(name);
-        if (f == NULL) {
+        if (f == nullptr) {
             DEBUG('a', "Archivo con nombre %s vacio\n", name);
             machine->WriteRegister(2, -1);
         } else {
