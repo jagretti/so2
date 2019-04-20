@@ -268,7 +268,7 @@ SyscallHandler(ExceptionType _et)
         int id = machine->ReadRegister(4);
         Thread *t = procTable[id];
         t->Join();
-        machine->WriteRegister(2, 0);
+        machine->WriteRegister(2, t->exitStatus);
         break;
     }
     case SC_EXEC:{
