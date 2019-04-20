@@ -141,11 +141,9 @@ SyscallHandler(ExceptionType _et)
         DEBUG('a', "Open requested for file `%s`.\n", filename);
         if (fileSystem->Create(filename,0)) {
             DEBUG('a', "Se creo el archivo %s correctamente\n", filename);
-            machine->WriteRegister(2, 1);
         }
         else {
             DEBUG('a', "Error creando el archivo %s \n", filename);
-            machine->WriteRegister(2, -1);
         }
         delete []filename;
         break;
