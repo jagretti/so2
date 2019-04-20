@@ -183,14 +183,13 @@ SyscallHandler(ExceptionType _et)
     }
 
     case SC_CLOSE: {
-        int fid = machine->ReadRegister(4);
-        DEBUG('a', "Close requested for id %u.\n", fid);
-        if (fid < 2) {
+        int fd = machine->ReadRegister(4);
+        DEBUG('a', "Close requested for id %u.\n", fd);
+        if (fd < 2) {
             DEBUG('a', "Hubo un error cerrando un archivo");
-            machine->WriteRegister(2, -1);
         } else {
-            currentThread->CloseFile(fid);
-            DEBUG('a', "Se cerro archivo con fd %d", fid);
+            currentThread->CloseFile(fd);
+            DEBUG('a', "Se cerro archivo con fd %d", fd);
         }
         break;
     }
