@@ -153,7 +153,7 @@ SyscallHandler(ExceptionType _et)
         int fileNameAddr = machine->ReadRegister(4);
         if (fileNameAddr == 0)
             DEBUG('a', "Error: address to filename string is null\n");
-        char *filename = new char[FILE_NAME_MAX_LEN + 1]; 
+        char *filename = new char[FILE_NAME_MAX_LEN + 1];
         ReadStringFromUser(fileNameAddr, filename, FILE_NAME_MAX_LEN);
         bool remove_ok = fileSystem->Remove(filename);
         if (!remove_ok) {
