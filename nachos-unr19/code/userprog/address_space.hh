@@ -48,6 +48,8 @@ public:
 
     // Guarda la entrada en la pageTable del proceso.
     void SaveEntry(TranslationEntry toSave);
+
+    void LoadPage(unsigned virtualAddr);
 private:
 
     /// Assume linear page table translation for now!
@@ -59,6 +61,7 @@ private:
     ///
     bool isValid;
 
+    OpenFile *executable;
 };
 
 

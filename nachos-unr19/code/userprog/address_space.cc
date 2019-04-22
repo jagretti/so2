@@ -60,6 +60,8 @@ AddressSpace::AddressSpace(OpenFile *executable)
 {
     ASSERT(executable != nullptr);
 
+    this->executable = executable;
+
     noffHeader noffH;
     executable->ReadAt((char *) &noffH, sizeof noffH, 0);
     if (noffH.noffMagic != NOFF_MAGIC &&
@@ -92,7 +94,7 @@ AddressSpace::AddressSpace(OpenFile *executable)
     for (unsigned i = 0; i < numPages; i++) {
         pageTable[i].virtualPage  = i;
         pageTable[i].physicalPage = userProgramFrameTable->Find();
-        pageTable[i].valid        = true;
+        pageTable[i].valid        = false;
         pageTable[i].use          = false;
         pageTable[i].dirty        = false;
         pageTable[i].readOnly     = false;
@@ -100,27 +102,6 @@ AddressSpace::AddressSpace(OpenFile *executable)
           // set its pages to be read-only.
         // Zero out the physical address space
         memset(&(mainMemory[pageTable[i].physicalPage * PAGE_SIZE]), 0, PAGE_SIZE);
-    }
-
-    // Then, copy in the code and data segments into memory.
-    for (unsigned i = 0; i < noffH.code.size; i++) {
-        char byte;
-        executable->ReadAt(&byte, 1, noffH.code.inFileAddr + i);
-        int virtualAddr = noffH.code.virtualAddr + i;
-        int virtualPageNum = virtualAddr / PAGE_SIZE;
-        int offset = virtualAddr % PAGE_SIZE;
-        int physicalPage = pageTable[virtualPageNum].physicalPage * PAGE_SIZE;
-        mainMemory[physicalPage + offset] = byte;
-    }
-
-    for (unsigned i = 0; i < noffH.initData.size; i++) {
-        char byte;
-        executable->ReadAt(&byte, 1, noffH.initData.inFileAddr + i);
-        int virtualAddr = noffH.initData.virtualAddr + i;
-        int virtualPageNum = virtualAddr / PAGE_SIZE;
-        int offset = virtualAddr % PAGE_SIZE;
-        int physicalPage = pageTable[virtualPageNum].physicalPage * PAGE_SIZE;
-        mainMemory[physicalPage + offset] = byte;
     }
 }
 
@@ -212,4 +193,36 @@ AddressSpace::SaveEntry(TranslationEntry toSave)
 {
     int vpn = toSave.virtualPage;
     this->pageTable[vpn] = toSave;
+}
+
+
+void
+AddressSpace::LoadPage(unsigned virtualAddr)
+{
+    // hmm
+    noffHeader noffH;
+    this->executable->ReadAt((char *) &noffH, sizeof noffH, 0);
+    if (noffH.noffMagic != NOFF_MAGIC &&
+        WordToHost(noffH.noffMagic) == NOFF_MAGIC)
+        SwapHeader(&noffH);
+    ASSERT(noffH.noffMagic == NOFF_MAGIC);
+
+    char byte;
+    int virtualPageNum = virtualAddr / PAGE_SIZE;
+    int offset = virtualAddr % PAGE_SIZE;
+    // donde esta la cosa
+    if (virtualAddr < noffH.initData.virtualAddr) {
+        // code
+        int i = virtualAddr / noffH.code.size;
+        executable->ReadAt(&byte, 1, noffH.code.inFileAddr + i);
+    } else {
+        // initData
+        int i = virtualAddr / noffH.code.size;
+        executable->ReadAt(&byte, 1, noffH.initData.inFileAddr + i);
+    }
+    int physicalPage = pageTable[virtualPageNum].physicalPage * PAGE_SIZE;
+    machine->GetMMU()->mainMemory[physicalPage + offset] = byte;
+
+    // and at last valid true
+    pageTable[virtualPageNum].valid = true;
 }

@@ -130,20 +130,22 @@ SyscallHandler(ExceptionType _et)
 
     case SC_CREATE: {
         int filenameAddr = machine->ReadRegister(4);
+
         if (filenameAddr == 0)
             DEBUG('a', "Error: address to filename string is null.\n");
 
         char *filename = new char[FILE_NAME_MAX_LEN + 1];
-        if (!ReadStringFromUser(filenameAddr, filename, sizeof filename))
+        if (!ReadStringFromUser(filenameAddr, filename, sizeof filename + 1)) {
             DEBUG('a', "Error: filename string too long (maximum is %u bytes).\n",
                   FILE_NAME_MAX_LEN);
-
-        DEBUG('a', "Open requested for file `%s`.\n", filename);
-        if (fileSystem->Create(filename,0)) {
-            DEBUG('a', "Se creo el archivo %s correctamente\n", filename);
-        }
-        else {
-            DEBUG('a', "Error creando el archivo %s \n", filename);
+        } else {
+            DEBUG('a', "Open requested for file `%s`.\n", filename);
+            if (fileSystem->Create(filename,0)) {
+                DEBUG('a', "Se creo el archivo %s correctamente\n", filename);
+            }
+            else {
+                DEBUG('a', "Error creando el archivo %s \n", filename);
+            }
         }
         delete []filename;
         break;
@@ -227,7 +229,7 @@ SyscallHandler(ExceptionType _et)
         int fd = machine->ReadRegister(6);
         int size = machine->ReadRegister(5);
         char *buff = new char[size];
-        int read = -1;
+        int read = 0;
         if (fd == 1) { //stdout
             machine->WriteRegister(2, read);
             delete []buff;
@@ -319,6 +321,10 @@ PageFaultHandler(ExceptionType et)
     int virtualPage = virtualAddr / PAGE_SIZE;
     // Busco la entrada en el espacio de direcciones del thread actual
     TranslationEntry entry = currentThread->space->GetEntry(virtualPage);
+    if (!entry.valid) {
+        currentThread->space->LoadPage(virtualAddr);
+        entry = currentThread->space->GetEntry(virtualPage);
+    }
     SaveInTLB(entry, position);
     // position varia entre 0,1,2,3 y asi sucesivamente haciendo un FIFO sobre la tlb
     position = (position + 1) % TLB_SIZE;
