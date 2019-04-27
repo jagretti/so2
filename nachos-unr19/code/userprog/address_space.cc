@@ -60,26 +60,30 @@ AddressSpace::AddressSpace(OpenFile *executable)
 {
     ASSERT(executable != nullptr);
 
-    noffHeader noffH;
+    // Comentamos esto, por que ahora noffH esta en AddressSpace
+    // como propiedad private
+    //noffHeader noffH;
     executable->ReadAt((char *) &noffH, sizeof noffH, 0);
     if (noffH.noffMagic != NOFF_MAGIC &&
           WordToHost(noffH.noffMagic) == NOFF_MAGIC)
         SwapHeader(&noffH);
     ASSERT(noffH.noffMagic == NOFF_MAGIC);
 
-    // How big is address space?
+    // Guardamos el executable en el address_space
+    address_exec = executable;
 
+    // How big is address space?
     unsigned size = noffH.code.size + noffH.initData.size
                     + noffH.uninitData.size + USER_STACK_SIZE;
-      // We need to increase the size to leave room for the stack.
+    // We need to increase the size to leave room for the stack.
     numPages = DivRoundUp(size, PAGE_SIZE);
     size = numPages * PAGE_SIZE;
 
+    // Check we are not trying to run anything too big -- at least until we
+    // have virtual memory.
     ASSERT(numPages <= NUM_PHYS_PAGES);
-      // Check we are not trying to run anything too big -- at least until we
-      // have virtual memory.
 
-    //
+    // Seteo si es valido o no el address_space
     isValid = numPages <= userProgramFrameTable->CountClear();
 
     DEBUG('a', "Initializing address space, num pages %u, size %u\n",
@@ -197,12 +201,14 @@ AddressSpace::RestoreState()
 
 }
 
+//----------------------------------------------------------------------
+// Retorna si el espacio de direcciones es valido
+//----------------------------------------------------------------------
 bool
 AddressSpace::IsValid()
 {
     return this->isValid;
 }
-
 
 //----------------------------------------------------------------------
 // Obtener la i-esima posicion de la pageTable asociada
@@ -214,9 +220,44 @@ AddressSpace::GetEntry(int virtualPageIndex)
     return this->pageTable[virtualPageIndex];
 }
 
+//----------------------------------------------------------------------
+// Guarda la entrada toSave en la pageTable del proceso
+//----------------------------------------------------------------------
 void
 AddressSpace::SaveEntry(TranslationEntry toSave)
 {
     int vpn = toSave.virtualPage;
     this->pageTable[vpn] = toSave;
 }
+
+//----------------------------------------------------------------------
+// Carga una pagina a partir del ejecutable (usado en USE_DL)
+// NO ANDA!!
+//----------------------------------------------------------------------
+bool
+AddressSpace::LoadPage(int virtualPage)
+{
+    // Obtenemos la pagina fisica donde cargar la faltante
+    int physicalPage = userProgramFrameTable->Find();
+    for (int i = 0; i < PAGE_SIZE; i++) {
+        char byte;
+        // Obtenemos la virtualAddress
+        int virtualAddress = virtualPage * PAGE_SIZE + i;
+        // Y la physicalAddress
+        int physicalAddress = physicalPage * PAGE_SIZE + i;
+        if (virtualAddress >= noffH.code.virtualAddr and virtualAddress < noffH.code.virtualAddr + noffH.code.size) {
+            // La direccion esta dentro del segmento de codigo del ejecutable
+            address_exec->ReadAt(&byte, 1, noffH.code.inFileAddr + i);
+        } else if (virtualAddress >= noffH.initData.virtualAddr and virtualAddress < noffH.initData.virtualAddr + noffH.initData.size) {
+            // La direccion esta dentro del segmento de datos del ejecutable
+            address_exec->ReadAt(&byte, 1, noffH.initData.inFileAddr + i);
+        } else {
+            byte = 0;
+        }
+        machine->GetMMU()->mainMemory[physicalAddress] = byte;
+        pageTable[virtualPage].physicalPage = physicalPage;
+        pageTable[virtualPage].valid = true;
+    }
+}
+
+

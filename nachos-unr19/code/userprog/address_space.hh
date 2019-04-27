@@ -16,6 +16,7 @@
 
 #include "filesys/file_system.hh"
 #include "machine/translation_entry.hh"
+#include "bin/noff.h"
 
 
 const unsigned USER_STACK_SIZE = 1024;  ///< Increase this as necessary!
@@ -48,6 +49,9 @@ public:
 
     // Guarda la entrada en la pageTable del proceso.
     void SaveEntry(TranslationEntry toSave);
+
+    // Carga una pagina desde el executable
+    bool LoadPage(int virtualPage);
 private:
 
     /// Assume linear page table translation for now!
@@ -56,8 +60,14 @@ private:
     /// Number of pages in the virtual address space.
     unsigned numPages;
 
-    ///
+    /// 
     bool isValid;
+
+    /// Executable para continuar leyendo
+    OpenFile *address_exec;
+
+    /// noffHeader 
+    noffHeader noffH;    
 
 };
 
