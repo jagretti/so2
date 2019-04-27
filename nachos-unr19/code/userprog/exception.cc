@@ -61,6 +61,7 @@ int SaveInTLB(TranslationEntry toSave, int position)
 
 void printTLB()
 {
+    printf("--------------\n");
     for(unsigned i = 0; i < TLB_SIZE; i++) {
         printf("TLB[%d] -- ", i);
         printf("physical: %d virtual: %d dirty: %d valid: %d\n",
@@ -319,10 +320,17 @@ PageFaultHandler(ExceptionType et)
     int virtualPage = virtualAddr / PAGE_SIZE;
     // Busco la entrada en el espacio de direcciones del thread actual
     TranslationEntry entry = currentThread->space->GetEntry(virtualPage);
+    #ifdef USE_DL
+        if (!entry.valid) {
+            bool status = currentThread->space->LoadPage(virtualPage);
+            DEBUG('l', "Status de LoadPage: %d\n", ok)
+            entry = currentThread->space->GetEntry(virtualPage);
+        }
+    #endif
     SaveInTLB(entry, position);
     // position varia entre 0,1,2,3 y asi sucesivamente haciendo un FIFO sobre la tlb
     position = (position + 1) % TLB_SIZE;
-    // printTLB();
+    printTLB();
 }
 
 /// By default, only system calls have their own handler.  All other

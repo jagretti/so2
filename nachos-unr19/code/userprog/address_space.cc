@@ -91,37 +91,44 @@ AddressSpace::AddressSpace(OpenFile *executable)
     char *mainMemory = machine->GetMMU()->mainMemory;
     for (unsigned i = 0; i < numPages; i++) {
         pageTable[i].virtualPage  = i;
-        pageTable[i].physicalPage = userProgramFrameTable->Find();
-        pageTable[i].valid        = true;
+        #ifdef USE_DL
+            pageTable[i].physicalPage = -1;
+            pageTable[i].valid = false;
+        #else
+            pageTable[i].physicalPage = userProgramFrameTable->Find();
+            pageTable[i].valid        = true;
+            memset(&(mainMemory[pageTable[i].physicalPage * PAGE_SIZE]), 0, PAGE_SIZE);
+        #endif
         pageTable[i].use          = false;
         pageTable[i].dirty        = false;
         pageTable[i].readOnly     = false;
           // If the code segment was entirely on a separate page, we could
           // set its pages to be read-only.
         // Zero out the physical address space
-        memset(&(mainMemory[pageTable[i].physicalPage * PAGE_SIZE]), 0, PAGE_SIZE);
     }
 
     // Then, copy in the code and data segments into memory.
-    for (unsigned i = 0; i < noffH.code.size; i++) {
-        char byte;
-        executable->ReadAt(&byte, 1, noffH.code.inFileAddr + i);
-        int virtualAddr = noffH.code.virtualAddr + i;
-        int virtualPageNum = virtualAddr / PAGE_SIZE;
-        int offset = virtualAddr % PAGE_SIZE;
-        int physicalPage = pageTable[virtualPageNum].physicalPage * PAGE_SIZE;
-        mainMemory[physicalPage + offset] = byte;
-    }
+    #ifndef USE_DL
+        for (unsigned i = 0; i < noffH.code.size; i++) {
+            char byte;
+            executable->ReadAt(&byte, 1, noffH.code.inFileAddr + i);
+            int virtualAddr = noffH.code.virtualAddr + i;
+            int virtualPageNum = virtualAddr / PAGE_SIZE;
+            int offset = virtualAddr % PAGE_SIZE;
+            int physicalPage = pageTable[virtualPageNum].physicalPage * PAGE_SIZE;
+            mainMemory[physicalPage + offset] = byte;
+        }
 
-    for (unsigned i = 0; i < noffH.initData.size; i++) {
-        char byte;
-        executable->ReadAt(&byte, 1, noffH.initData.inFileAddr + i);
-        int virtualAddr = noffH.initData.virtualAddr + i;
-        int virtualPageNum = virtualAddr / PAGE_SIZE;
-        int offset = virtualAddr % PAGE_SIZE;
-        int physicalPage = pageTable[virtualPageNum].physicalPage * PAGE_SIZE;
-        mainMemory[physicalPage + offset] = byte;
-    }
+        for (unsigned i = 0; i < noffH.initData.size; i++) {
+            char byte;
+            executable->ReadAt(&byte, 1, noffH.initData.inFileAddr + i);
+            int virtualAddr = noffH.initData.virtualAddr + i;
+            int virtualPageNum = virtualAddr / PAGE_SIZE;
+            int offset = virtualAddr % PAGE_SIZE;
+            int physicalPage = pageTable[virtualPageNum].physicalPage * PAGE_SIZE;
+            mainMemory[physicalPage + offset] = byte;
+        }
+    #endif
 }
 
 /// Deallocate an address space.
