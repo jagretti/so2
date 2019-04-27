@@ -323,7 +323,7 @@ PageFaultHandler(ExceptionType et)
     #ifdef USE_DL
         if (!entry.valid) {
             bool status = currentThread->space->LoadPage(virtualPage);
-            DEBUG('l', "Status de LoadPage: %d\n", ok)
+            DEBUG('l', "Status de LoadPage: %d\n", status);
             entry = currentThread->space->GetEntry(virtualPage);
         }
     #endif
