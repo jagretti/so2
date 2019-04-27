@@ -321,7 +321,7 @@ PageFaultHandler(ExceptionType et)
     int virtualPage = virtualAddr / PAGE_SIZE;
     // Busco la entrada en el espacio de direcciones del thread actual
     TranslationEntry entry = currentThread->space->GetEntry(virtualPage);
-    if (!entry.valid) {
+    if (!entry.valid or entry.physicalPage == -1) {
         currentThread->space->LoadPage(virtualAddr);
         entry = currentThread->space->GetEntry(virtualPage);
     }

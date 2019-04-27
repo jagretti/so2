@@ -60,10 +60,10 @@ AddressSpace::AddressSpace(OpenFile *executable)
 {
     ASSERT(executable != nullptr);
 
-    this->executable = executable;
+    exec = executable;
 
     noffHeader noffH;
-    executable->ReadAt((char *) &noffH, sizeof noffH, 0);
+    exec->ReadAt((char *) &noffH, sizeof noffH, 0);
     if (noffH.noffMagic != NOFF_MAGIC &&
           WordToHost(noffH.noffMagic) == NOFF_MAGIC)
         SwapHeader(&noffH);
@@ -93,7 +93,7 @@ AddressSpace::AddressSpace(OpenFile *executable)
     char *mainMemory = machine->GetMMU()->mainMemory;
     for (unsigned i = 0; i < numPages; i++) {
         pageTable[i].virtualPage  = i;
-        pageTable[i].physicalPage = userProgramFrameTable->Find();
+        pageTable[i].physicalPage = -1; //userProgramFrameTable->Find();
         pageTable[i].valid        = false;
         pageTable[i].use          = false;
         pageTable[i].dirty        = false;
@@ -101,7 +101,7 @@ AddressSpace::AddressSpace(OpenFile *executable)
           // If the code segment was entirely on a separate page, we could
           // set its pages to be read-only.
         // Zero out the physical address space
-        memset(&(mainMemory[pageTable[i].physicalPage * PAGE_SIZE]), 0, PAGE_SIZE);
+        //memset(&(mainMemory[pageTable[i].physicalPage * PAGE_SIZE]), 0, PAGE_SIZE);
     }
 }
 
@@ -199,30 +199,40 @@ AddressSpace::SaveEntry(TranslationEntry toSave)
 void
 AddressSpace::LoadPage(unsigned virtualAddr)
 {
-    // hmm
     noffHeader noffH;
-    this->executable->ReadAt((char *) &noffH, sizeof noffH, 0);
+    exec->ReadAt((char *) &noffH, sizeof noffH, 0);
     if (noffH.noffMagic != NOFF_MAGIC &&
         WordToHost(noffH.noffMagic) == NOFF_MAGIC)
         SwapHeader(&noffH);
     ASSERT(noffH.noffMagic == NOFF_MAGIC);
+    
+    int physicalPage = userProgramFrameTable->Find();
 
-    char byte;
-    int virtualPageNum = virtualAddr / PAGE_SIZE;
-    int offset = virtualAddr % PAGE_SIZE;
-    // donde esta la cosa
-    if (virtualAddr < noffH.initData.virtualAddr) {
-        // code
-        int i = virtualAddr / noffH.code.size;
-        executable->ReadAt(&byte, 1, noffH.code.inFileAddr + i);
-    } else {
-        // initData
-        int i = virtualAddr / noffH.code.size;
-        executable->ReadAt(&byte, 1, noffH.initData.inFileAddr + i);
+    char b;
+    int read;
+    for(int byte = 0; byte < PAGE_SIZE; byte++) {
+        int vaddr = vaddr + byte;
+        int paddr = physicalPage * PAGE_SIZE + byte;
+        // donde esta la cosa
+        if (vaddr >= noffH.code.virtualAddr && vaddr < noffH.code.virtualAddr + noffH.code.size) {
+            // code
+            //exec->ReadAt(&(machine->GetMMU()->mainMemory[paddr]), 1, noffH.code.inFileAddr + vaddr - noffH.code.virtualAddr);
+            read = exec->ReadAt(&(b), 1, noffH.code.inFileAddr + vaddr - noffH.code.virtualAddr);
+            DEBUG('l', "ReadAt: read = %d - Byte leido: b = %s\n", read, b);  
+            machine->GetMMU()->mainMemory[paddr] = b;
+        } else if (vaddr >= noffH.initData.virtualAddr && vaddr < noffH.initData.virtualAddr + noffH.initData.size) {
+            // initData
+            //read = exec->ReadAt(&(machine->GetMMU()->mainMemory[paddr]), 1, noffH.initData.inFileAddr + vaddr - noffH.initData.virtualAddr);
+            read = exec->ReadAt(&(b), 1, noffH.initData.inFileAddr + vaddr - noffH.initData.virtualAddr);
+            DEBUG('l', "ReadAt: read = %d - Byte leido: b = %s\n", read, b);  
+            machine->GetMMU()->mainMemory[paddr] = b;
+        } else {
+            machine->GetMMU()->mainMemory[paddr] = 0;
+        }
     }
-    int physicalPage = pageTable[virtualPageNum].physicalPage * PAGE_SIZE;
-    machine->GetMMU()->mainMemory[physicalPage + offset] = byte;
-
-    // and at last valid true
+    int virtualPageNum = virtualAddr / PAGE_SIZE;
+    // validamos la pagina en la pageTable
+    pageTable[virtualPageNum].physicalPage = physicalPage;
+    // le ponemos que la pagina es valida
     pageTable[virtualPageNum].valid = true;
 }
