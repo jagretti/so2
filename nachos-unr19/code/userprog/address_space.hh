@@ -61,7 +61,7 @@ private:
     ///
     bool isValid;
 
-    OpenFile *executable;
+    OpenFile *exec;
 };
 
 
