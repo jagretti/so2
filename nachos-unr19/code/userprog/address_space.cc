@@ -63,7 +63,7 @@ AddressSpace::AddressSpace(OpenFile *executable)
     this->exec = executable;
 
     noffHeader noffH;
-    executable->ReadAt((char *) &noffH, sizeof noffH, 0);
+    exec->ReadAt((char *) &noffH, sizeof noffH, 0);
     if (noffH.noffMagic != NOFF_MAGIC &&
           WordToHost(noffH.noffMagic) == NOFF_MAGIC)
         SwapHeader(&noffH);
@@ -199,7 +199,6 @@ AddressSpace::SaveEntry(TranslationEntry toSave)
 void
 AddressSpace::LoadPage(unsigned virtualAddress)
 {
-    // hmm
     noffHeader noffH;
     exec->ReadAt((char *) &noffH, sizeof noffH, 0);
     if (noffH.noffMagic != NOFF_MAGIC &&
