@@ -195,6 +195,31 @@ AddressSpace::SaveEntry(TranslationEntry toSave)
     this->pageTable[vpn] = toSave;
 }
 
+void copyVirtualAddressToMemory(unsigned virtualAddress, OpenFile *file, noffHeader noffH ,  char *memory, TranslationEntry *pageTable) {
+    unsigned isCode = virtualAddress < noffH.code.size;
+    if (isCode) {
+        char byte;
+        file->ReadAt(&byte, 1, noffH.code.inFileAddr + virtualAddress);
+        int virtualAddr = virtualAddress;
+        int virtualPageNum = virtualAddr / PAGE_SIZE;
+        int offset = virtualAddr % PAGE_SIZE;
+        int physicalPage = pageTable[virtualPageNum].physicalPage * PAGE_SIZE;
+        memory[physicalPage + offset] = byte;
+    }
+
+    bool isInitData = virtualAddress >= noffH.initData.virtualAddr && virtualAddress < (noffH.initData.virtualAddr + noffH.initData.size);
+    if (isInitData) {
+        unsigned i = virtualAddress - noffH.initData.virtualAddr;
+        char byte;
+        file->ReadAt(&byte, 1, noffH.initData.inFileAddr + i);
+        int virtualAddr = noffH.initData.virtualAddr + i;
+        int virtualPageNum = virtualAddr / PAGE_SIZE;
+        int offset = virtualAddr % PAGE_SIZE;
+        int physicalPage = pageTable[virtualPageNum].physicalPage * PAGE_SIZE;
+        memory[physicalPage + offset] = byte;
+    }
+
+}
 
 void
 AddressSpace::LoadPage(unsigned virtualAddress)
@@ -207,39 +232,11 @@ AddressSpace::LoadPage(unsigned virtualAddress)
     ASSERT(noffH.noffMagic == NOFF_MAGIC);
 
     char *mainMemory = machine->GetMMU()->mainMemory;
-    //
-    unsigned count = 0;
-    unsigned isCode = virtualAddress < noffH.code.size;
-    if (isCode) {
-        unsigned i = virtualAddress;
-        for (; i < noffH.code.size && count < PAGE_SIZE; i++) {
-            char byte;
-            exec->ReadAt(&byte, 1, noffH.code.inFileAddr + i);
-            int virtualAddr = noffH.code.virtualAddr + i;
-            int virtualPageNum = virtualAddr / PAGE_SIZE;
-            int offset = virtualAddr % PAGE_SIZE;
-            int physicalPage = pageTable[virtualPageNum].physicalPage * PAGE_SIZE;
-            mainMemory[physicalPage + offset] = byte;
-            count++;
-        }
-    }
 
-    //
-    if (count < PAGE_SIZE) {
-        bool isInitData = (virtualAddress + count) >= noffH.initData.virtualAddr;
-        if (isInitData) {
-            unsigned i = (virtualAddress + count) - noffH.initData.virtualAddr;
-            for (; i < noffH.initData.size && count < PAGE_SIZE; i++) {
-                char byte;
-                exec->ReadAt(&byte, 1, noffH.initData.inFileAddr + i);
-                int virtualAddr = noffH.initData.virtualAddr + i;
-                int virtualPageNum = virtualAddr / PAGE_SIZE;
-                int offset = virtualAddr % PAGE_SIZE;
-                int physicalPage = pageTable[virtualPageNum].physicalPage * PAGE_SIZE;
-                mainMemory[physicalPage + offset] = byte;
-                count++;
-            }
-        }
+    // first byte of the page
+    unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
+    for (unsigned i = 0; i < PAGE_SIZE; i++) {
+        copyVirtualAddressToMemory(address + i, exec, noffH, mainMemory, pageTable);
     }
     pageTable[virtualAddress / PAGE_SIZE].valid = true;
 }
