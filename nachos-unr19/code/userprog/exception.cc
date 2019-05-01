@@ -124,7 +124,7 @@ SyscallHandler(ExceptionType _et)
     switch (scid) {
 
     case SC_HALT: {
-        DEBUG('a', "Shutdown, initiated by user program.\n");
+        DEBUG('k', "Shutdown, initiated by user program.\n");
         interrupt->Halt();
         break;
     }
@@ -132,19 +132,19 @@ SyscallHandler(ExceptionType _et)
     case SC_CREATE: {
         int filenameAddr = machine->ReadRegister(4);
         if (filenameAddr == 0)
-            DEBUG('a', "Error: address to filename string is null.\n");
+            DEBUG('k', "Error: address to filename string is null.\n");
 
         char *filename = new char[FILE_NAME_MAX_LEN + 1];
         if (!ReadStringFromUser(filenameAddr, filename, sizeof filename))
-            DEBUG('a', "Error: filename string too long (maximum is %u bytes).\n",
+            DEBUG('k', "Error: filename string too long (maximum is %u bytes).\n",
                   FILE_NAME_MAX_LEN);
 
-        DEBUG('a', "Open requested for file `%s`.\n", filename);
+        DEBUG('k', "Open requested for file `%s`.\n", filename);
         if (fileSystem->Create(filename,0)) {
-            DEBUG('a', "Se creo el archivo %s correctamente\n", filename);
+            DEBUG('k', "Se creo el archivo %s correctamente\n", filename);
         }
         else {
-            DEBUG('a', "Error creando el archivo %s \n", filename);
+            DEBUG('k', "Error creando el archivo %s \n", filename);
         }
         delete []filename;
         break;
@@ -158,10 +158,10 @@ SyscallHandler(ExceptionType _et)
         ReadStringFromUser(fileNameAddr, filename, FILE_NAME_MAX_LEN);
         bool remove_ok = fileSystem->Remove(filename);
         if (!remove_ok) {
-            DEBUG('a', "Error borrando el archivo %s\n", filename);
+            DEBUG('k', "Error borrando el archivo %s\n", filename);
             machine->WriteRegister(2, -1);
         } else {
-            DEBUG('a', "Se borro el archivo %s correctamente\n", filename);
+            DEBUG('k', "Se borro el archivo %s correctamente\n", filename);
         }
         delete []filename;
         break;
@@ -172,12 +172,12 @@ SyscallHandler(ExceptionType _et)
         ReadStringFromUser(machine->ReadRegister(4),name, 128);
         OpenFile *f = fileSystem->Open(name);
         if (f == nullptr) {
-            DEBUG('a', "Archivo con nombre %s vacio\n", name);
+            DEBUG('k', "Archivo con nombre %s vacio\n", name);
             machine->WriteRegister(2, -1);
         } else {
             int fd = currentThread->AddFile(f);
             machine->WriteRegister(2, fd);
-            DEBUG('a', "Se abrio archivo con nombre %s y fd %d\n", name, fd);
+            DEBUG('k', "Se abrio archivo con nombre %s y fd %d\n", name, fd);
         }
         delete []name;
         break;
@@ -187,10 +187,10 @@ SyscallHandler(ExceptionType _et)
         int fd = machine->ReadRegister(4);
         DEBUG('a', "Close requested for id %u.\n", fd);
         if (fd < 2) {
-            DEBUG('a', "Hubo un error cerrando un archivo");
+            DEBUG('k', "Hubo un error cerrando un archivo");
         } else {
             currentThread->CloseFile(fd);
-            DEBUG('a', "Se cerro archivo con fd %d", fd);
+            DEBUG('k', "Se cerro archivo con fd %d", fd);
         }
         break;
     }
@@ -209,14 +209,14 @@ SyscallHandler(ExceptionType _et)
             } else {
                 OpenFile *f = currentThread->GetFile(fd);
                 if (f == nullptr) {
-                    DEBUG('a', "El archivo %d no esta abierto", fd);
+                    DEBUG('k', "El archivo %d no esta abierto", fd);
                     delete []buff;
                     break;
                 }
                 // Leo del espacio de usuario el string a escribir
                 ReadStringFromUser(arg, buff, size);
                 size = strlen(buff);
-                DEBUG('a', "Escribo en archivo %d\n", fd);
+                DEBUG('k', "Escribo en archivo %d\n", fd);
                 f->Write((const char*)buff, size);
             }
         }
@@ -254,7 +254,7 @@ SyscallHandler(ExceptionType _et)
             }
         }
         machine->WriteRegister(2, read);
-        DEBUG('a', "Leo en archivo %d\n", fd);
+        DEBUG('k', "Leo en archivo %d\n", fd);
         delete []buff;
         break;
     }
@@ -322,15 +322,14 @@ PageFaultHandler(ExceptionType et)
     TranslationEntry entry = currentThread->space->GetEntry(virtualPage);
     #ifdef USE_DL
         if (!entry.valid) {
-            bool status = currentThread->space->LoadPage(virtualPage);
-            DEBUG('l', "Status de LoadPage: %d\n", status);
+            currentThread->space->LoadPage(virtualAddr);
             entry = currentThread->space->GetEntry(virtualPage);
         }
     #endif
     SaveInTLB(entry, position);
     // position varia entre 0,1,2,3 y asi sucesivamente haciendo un FIFO sobre la tlb
     position = (position + 1) % TLB_SIZE;
-    printTLB();
+    //printTLB();
 }
 
 /// By default, only system calls have their own handler.  All other

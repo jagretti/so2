@@ -137,11 +137,15 @@ AddressSpace::AddressSpace(OpenFile *executable)
 
 /// Deallocate an address space.
 ///
-/// Nothing for now!
+/// VER SI ES NECESARIO EL IF
 AddressSpace::~AddressSpace()
 {
     for (unsigned i = 0; i < numPages; i++) {
-        userProgramFrameTable->Clear(pageTable[i].physicalPage);
+        // Si tiene asignada pagina fisica, la borro
+        if (pageTable[i].physicalPage != -1) {
+            userProgramFrameTable->Clear(pageTable[i].physicalPage);
+            memset(&(machine->GetMMU()->mainMemory[pageTable[i].physicalPage * PAGE_SIZE]), 0, PAGE_SIZE);
+        }
     }
     delete [] pageTable;
 }
@@ -230,34 +234,55 @@ AddressSpace::SaveEntry(TranslationEntry toSave)
     this->pageTable[vpn] = toSave;
 }
 
-//----------------------------------------------------------------------
-// Carga una pagina a partir del ejecutable (usado en USE_DL)
-// NO ANDA!!
-//----------------------------------------------------------------------
-bool
-AddressSpace::LoadPage(int virtualPage)
-{
-    // Obtenemos la pagina fisica donde cargar la faltante
-    int physicalPage = userProgramFrameTable->Find();
-    for (int i = 0; i < PAGE_SIZE; i++) {
+//-----------------------------------------------------------
+// Lee del ejecutable y copia en memoria
+//-----------------------------------------------------------
+void copyVirtualAddressToMemory(unsigned virtualAddress, OpenFile *file, noffHeader noffH ,  char *memory, TranslationEntry *pageTable) {
+    unsigned isCode = virtualAddress < noffH.code.size;
+    if (isCode) {
         char byte;
-        // Obtenemos la virtualAddress
-        int virtualAddress = virtualPage * PAGE_SIZE + i;
-        // Y la physicalAddress
-        int physicalAddress = physicalPage * PAGE_SIZE + i;
-        if (virtualAddress >= noffH.code.virtualAddr and virtualAddress < noffH.code.virtualAddr + noffH.code.size) {
-            // La direccion esta dentro del segmento de codigo del ejecutable
-            address_exec->ReadAt(&byte, 1, noffH.code.inFileAddr + i);
-        } else if (virtualAddress >= noffH.initData.virtualAddr and virtualAddress < noffH.initData.virtualAddr + noffH.initData.size) {
-            // La direccion esta dentro del segmento de datos del ejecutable
-            address_exec->ReadAt(&byte, 1, noffH.initData.inFileAddr + i);
-        } else {
-            byte = 0;
-        }
-        machine->GetMMU()->mainMemory[physicalAddress] = byte;
-        pageTable[virtualPage].physicalPage = physicalPage;
-        pageTable[virtualPage].valid = true;
+        file->ReadAt(&byte, 1, noffH.code.inFileAddr + virtualAddress);
+        int virtualAddr = virtualAddress;
+        int virtualPageNum = virtualAddr / PAGE_SIZE;
+        int offset = virtualAddr % PAGE_SIZE;
+        int physicalPage = pageTable[virtualPageNum].physicalPage * PAGE_SIZE;
+        memory[physicalPage + offset] = byte;
     }
+
+    bool isInitData = virtualAddress >= noffH.initData.virtualAddr && virtualAddress < (noffH.initData.virtualAddr + noffH.initData.size);
+    if (isInitData) {
+        unsigned i = virtualAddress - noffH.initData.virtualAddr;
+        char byte;
+        file->ReadAt(&byte, 1, noffH.initData.inFileAddr + i);
+        int virtualAddr = noffH.initData.virtualAddr + i;
+        int virtualPageNum = virtualAddr / PAGE_SIZE;
+        int offset = virtualAddr % PAGE_SIZE;
+        int physicalPage = pageTable[virtualPageNum].physicalPage * PAGE_SIZE;
+        memory[physicalPage + offset] = byte;
+    }
+
 }
 
+//----------------------------------------------------------------------
+// Carga una pagina a partir del ejecutable (usado en USE_DL)
+// 
+//----------------------------------------------------------------------
+void
+AddressSpace::LoadPage(unsigned virtualAddress)
+{
+    // Busco pagina virtual
+    int virtualPage = virtualAddress / PAGE_SIZE;
+    // Le asigno una fisica solo si no fue asignada antes
+    if (pageTable[virtualPage].physicalPage == -1) {
+        pageTable[virtualPage].physicalPage = userProgramFrameTable->Find();
+    }
+    char *mainMemory = machine->GetMMU()->mainMemory;
+
+    // first byte of the page
+    unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
+    for (unsigned i = 0; i < PAGE_SIZE; i++) {
+        copyVirtualAddressToMemory(address + i, address_exec, noffH, mainMemory, pageTable);
+    }
+    pageTable[virtualAddress / PAGE_SIZE].valid = true;
+}
 

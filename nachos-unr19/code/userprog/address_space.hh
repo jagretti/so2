@@ -51,7 +51,7 @@ public:
     void SaveEntry(TranslationEntry toSave);
 
     // Carga una pagina desde el executable
-    bool LoadPage(int virtualPage);
+    void LoadPage(unsigned virtualAddress);
 private:
 
     /// Assume linear page table translation for now!
