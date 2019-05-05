@@ -113,10 +113,18 @@ main(void)
             WriteError("too many arguments.", OUTPUT);
             continue;
         }
-
+        int join = 1;
+        if (line[0] == '&') {
+            for(int i = 0; i < lineSize - 1; i++) {
+                line[i] = line[i + 1];
+            }
+            line[lineSize - 1] = '\0';
+            join = 0;
+        }
         // Comment and uncomment according to whether command line arguments
         // are given in the system call or not.
         //const SpaceId newProc = Exec(line);
+        //WriteError(line, OUTPUT);
         const SpaceId newProc = Exec(line, argv);
         // Checking for errors in Exec
         if (newProc == -1) {
@@ -126,8 +134,10 @@ main(void)
             WriteError("program too big to be runned.", OUTPUT);
             continue;
         }
-
-        Join(newProc);
+        if (join != 0) {
+            //WriteError("Entre a join!!\n", OUTPUT);
+            Join(newProc);
+        }
         // TO DO: is it necessary to check for errors after `Join` too, or
         //        can you be sure that, with the implementation of the system
         //        call handler you made, it will never give an error?; what

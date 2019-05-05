@@ -183,7 +183,16 @@ AddressSpace::InitRegisters()
 /// For now, nothing!
 void
 AddressSpace::SaveState()
-{}
+{
+#ifdef USE_TLB
+    for (int i = 0; i < TLB_SIZE; i++) {
+        if (machine->GetMMU()->tlb[i].dirty and machine->GetMMU()->tlb[i].valid) { //PREGUNTAR SI ESTA BIEN!!
+            this->SaveEntry(machine->tlb[i]);
+        }
+    }
+#endif
+}
+
 
 /// On a context switch, restore the machine state so that this address space
 /// can run.
