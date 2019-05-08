@@ -6,8 +6,8 @@
 
 int main(void)
 {
-    Create("printB.txt");
-    OpenFileId o = Open("printB.txt");
+    Create("B.txt");
+    OpenFileId o = Open("B.txt");
     for(;;) {
         Write("B\n",sizeof "B\n", o);
     } 
