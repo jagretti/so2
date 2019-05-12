@@ -31,7 +31,7 @@ CPP = $(GCC_PREFIX)cpp
 
 INCLUDE_DIRS = -I../userprog -I../threads
 CFLAGS       = -std=c99 -G 0 -c $(INCLUDE_DIRS) -mips1 -mfp32 \
-               -nostdlib -nostartfiles -nodefaultlibs -mno-abicalls
+               -nostdlib -nostartfiles -nodefaultlibs -fno-pic -mno-abicalls
 
 PROGRAMS = halt shell tiny_shell matmult sort filetest cat cp printA printB
 
