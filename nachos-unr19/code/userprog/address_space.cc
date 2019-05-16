@@ -85,6 +85,9 @@ AddressSpace::AddressSpace(OpenFile *executable)
 
     // Seteo si es valido o no el address_space
     isValid = numPages <= userProgramFrameTable->CountClear();
+    // TODO
+    char *filename = currentThread->getName();
+    swapFile = fileSystem->Create(filename, 0));
 
     DEBUG('a', "Initializing address space, num pages %u, size %u\n",
           numPages, size);
@@ -283,15 +286,25 @@ AddressSpace::LoadPage(unsigned virtualAddress)
     int virtualPage = virtualAddress / PAGE_SIZE;
     // Le asigno una fisica solo si no fue asignada antes
     if (pageTable[virtualPage].physicalPage == -1) {
-        pageTable[virtualPage].physicalPage = userProgramFrameTable->Find();
+        pageTable[virtualPage].physicalPage = coremap->AllocMemory();
+        char *mainMemory = machine->GetMMU()->mainMemory;
+        // first byte of the page
+        unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
+        for (unsigned i = 0; i < PAGE_SIZE; i++) {
+            copyVirtualAddressToMemory(address + i, address_exec, noffH, \
+                                       mainMemory, pageTable);
+        }
     }
-    char *mainMemory = machine->GetMMU()->mainMemory;
-
-    // first byte of the page
-    unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
-    for (unsigned i = 0; i < PAGE_SIZE; i++) {
-        copyVirtualAddressToMemory(address + i, address_exec, noffH, mainMemory, pageTable);
+    if (pageTable[virtualPage].physicalPage == -2) {
+        pageTable[virtualPage].physicalPage = coremap->AllocMemory();
+        OpenFile *f = fileSystem->Open(currentThread->getName());
+        unsigned physicalAddress = pageTable[virtualPage].physicalPage;
+        unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
+        for (unsigned i = 0; i < PAGE_SIZE; i++) {
+            // copy to the alloc(ed) memory the PAGE
+            f->ReadAt(physicalAddress +i, 1, address++);
+        }
+        delete []page;
     }
     pageTable[virtualAddress / PAGE_SIZE].valid = true;
 }
-
