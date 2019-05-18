@@ -52,6 +52,8 @@ public:
 
     // Carga una pagina desde el executable
     void LoadPage(unsigned virtualAddress);
+
+    void WriteToSwap(unsigned virtualPage);
 private:
 
     /// Assume linear page table translation for now!
@@ -60,15 +62,17 @@ private:
     /// Number of pages in the virtual address space.
     unsigned numPages;
 
-    /// 
+    ///
     bool isValid;
 
     /// Executable para continuar leyendo
     OpenFile *address_exec;
 
-    /// noffHeader 
-    noffHeader noffH;    
+    /// noffHeader
+    noffHeader noffH;
 
+    /// swap file
+    OpenFile *swapFile;
 };
 
 

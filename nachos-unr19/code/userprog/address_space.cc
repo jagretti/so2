@@ -86,8 +86,9 @@ AddressSpace::AddressSpace(OpenFile *executable)
     // Seteo si es valido o no el address_space
     isValid = numPages <= userProgramFrameTable->CountClear();
     // TODO
-    char *filename = currentThread->getName();
-    swapFile = fileSystem->Create(filename, 0));
+    const char *filename = currentThread->GetName();
+    fileSystem->Create(filename, 0);
+    swapFile = fileSystem->Open(filename);
 
     DEBUG('a', "Initializing address space, num pages %u, size %u\n",
           numPages, size);
@@ -277,7 +278,6 @@ void copyVirtualAddressToMemory(unsigned virtualAddress, OpenFile *file, noffHea
 
 //----------------------------------------------------------------------
 // Carga una pagina a partir del ejecutable (usado en USE_DL)
-// 
 //----------------------------------------------------------------------
 void
 AddressSpace::LoadPage(unsigned virtualAddress)
@@ -296,15 +296,28 @@ AddressSpace::LoadPage(unsigned virtualAddress)
         }
     }
     if (pageTable[virtualPage].physicalPage == -2) {
-        pageTable[virtualPage].physicalPage = coremap->AllocMemory();
-        OpenFile *f = fileSystem->Open(currentThread->getName());
-        unsigned physicalAddress = pageTable[virtualPage].physicalPage;
+        unsigned physicalPage = coremap->AllocMemory();
+        // TLB has the same dir?? TODO
+        for (unsigned j = 0; j < TLB_SIZE; j++) {
+            if (machine->GetMMU()->tlb[j].physicalPage == physicalPage) {
+                // :(
+            }
+        }
+        pageTable[virtualPage].physicalPage = physicalPage;
         unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
         for (unsigned i = 0; i < PAGE_SIZE; i++) {
             // copy to the alloc(ed) memory the PAGE
-            f->ReadAt(physicalAddress +i, 1, address++);
+            swapFile->ReadAt(mainMemory[physicalPage*PAGE_SIZE + i], 1, address++);
         }
-        delete []page;
     }
     pageTable[virtualAddress / PAGE_SIZE].valid = true;
+}
+
+void
+AddressSpace::WriteToSwap(unsigned virtualPage) {
+    unsigned dir = pageTable[virtualPage].physicalPage;
+    for (unsigned i = 0; i < PAGE_SIZE; i++) {
+        // copy the mainMemory to the swap
+        swapFile->WriteAt(mainMemory[dir + i], 1, dir++);
+    }
 }

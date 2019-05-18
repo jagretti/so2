@@ -44,6 +44,7 @@ Machine *machine;              ///< User program memory and registers.
 Bitmap *userProgramFrameTable; ///< User program physical memory frame table.
 SynchConsole *sconsole;
 Thread **procTable;
+Coremap *coremap;
 #endif
 
 #ifdef NETWORK
@@ -187,6 +188,7 @@ Initialize(int argc, char **argv)
     userProgramFrameTable = new Bitmap(NUM_PHYS_PAGES);
     sconsole = new SynchConsole(nullptr, nullptr);
     procTable = new Thread*[MAX_PROCESS];
+    coremap = new Coremap(NUM_PHYS_PAGES);
     SetExceptionHandlers();
 #endif
 

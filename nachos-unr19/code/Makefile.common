@@ -132,9 +132,9 @@ USERPROG_OBJ = address_space.o            \
                synch_console.o            \
                args.o
 
-VMEM_HDR =
-VMEM_SRC =
-VMEM_OBJ =
+VMEM_HDR = ../vmem/coremap.hh
+VMEM_SRC = ../vmem/coremap.cc
+VMEM_OBJ = ../vmem/coremap.o
 
 FILESYS_HDR = ../filesys/directory.hh       \
               ../filesys/directory_entry.hh \

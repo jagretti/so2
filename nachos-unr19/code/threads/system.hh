@@ -48,6 +48,10 @@ extern SpaceId getNextId(Thread *t);
 extern void freeId(SpaceId id);
 #endif
 
+#ifdef VMEM
+extern Coremap *coremap;
+#endif
+
 #ifdef FILESYS_NEEDED  // *FILESYS* or *FILESYS_STUB*.
 #include "filesys/file_system.hh"
 extern FileSystem *fileSystem;
