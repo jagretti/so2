@@ -282,12 +282,12 @@ void copyVirtualAddressToMemory(unsigned virtualAddress, OpenFile *file, noffHea
 void
 AddressSpace::LoadPage(unsigned virtualAddress)
 {
+    char *mainMemory = machine->GetMMU()->mainMemory;
     // Busco pagina virtual
     int virtualPage = virtualAddress / PAGE_SIZE;
     // Le asigno una fisica solo si no fue asignada antes
     if (pageTable[virtualPage].physicalPage == -1) {
         pageTable[virtualPage].physicalPage = coremap->AllocMemory();
-        char *mainMemory = machine->GetMMU()->mainMemory;
         // first byte of the page
         unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
         for (unsigned i = 0; i < PAGE_SIZE; i++) {
@@ -307,7 +307,7 @@ AddressSpace::LoadPage(unsigned virtualAddress)
         unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
         for (unsigned i = 0; i < PAGE_SIZE; i++) {
             // copy to the alloc(ed) memory the PAGE
-            swapFile->ReadAt(mainMemory[physicalPage*PAGE_SIZE + i], 1, address++);
+            swapFile->ReadAt(&mainMemory[physicalPage*PAGE_SIZE + i], 1, address++);
         }
     }
     pageTable[virtualAddress / PAGE_SIZE].valid = true;
@@ -315,9 +315,10 @@ AddressSpace::LoadPage(unsigned virtualAddress)
 
 void
 AddressSpace::WriteToSwap(unsigned virtualPage) {
+    char *mainMemory = machine->GetMMU()->mainMemory;
     unsigned dir = pageTable[virtualPage].physicalPage;
     for (unsigned i = 0; i < PAGE_SIZE; i++) {
         // copy the mainMemory to the swap
-        swapFile->WriteAt(mainMemory[dir + i], 1, dir++);
+        swapFile->WriteAt(&mainMemory[dir*PAGE_SIZE + i], 1, dir++);
     }
 }
