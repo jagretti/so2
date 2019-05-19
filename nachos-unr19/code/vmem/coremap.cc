@@ -4,17 +4,33 @@ Coremap::Coremap(unsigned numPhyPages)
 {
     unsigned size = numPhyPages;
     VirtualEntry *virtualMem = new VirtualEntry[numPhyPages];
+    Bitmap *memoryMap = new Bitmap(numPhyPages);
 }
 
-void
+Coremap::~Coremap
+{
+    delete []virtualMem;
+    delete memoryMap;
+}
+
+int
 Coremap::AllocMemory()
 {
     static int position = 0;
-    int dir = userProgramFrameTable->Find();
-    if (dir != -1) {
-        return dir;
+    int pageNum = memoryMap->Find();
+    if (pageNum != -1) {
+        return page;
     }
-    VirutalEntry toDelete = virtualMem[postion];
+    pageNum = position % size;
+    position++;
+    VirutalEntry toDelete = virtualMem[pageNum];
     AddresSpace *space = toDelete->space;
     space->writeToSwap(toDelete->virtualPage);
+    return pageNum;
+}
+
+void
+Coremap::FreeMemory(unsigned int virtualPage)
+{
+    memoryMap->Clear(virtualPage);
 }

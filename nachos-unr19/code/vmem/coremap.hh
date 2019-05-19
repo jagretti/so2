@@ -1,11 +1,14 @@
-#ifndef COREMAP__HH
-#define COREMAP__HH
+#ifndef NACHOS_VMEM_COREMAP__HH
+#define NACHOS_VMEM_COREMAP__HH
 
 class Coremap {
 public:
-    Coremap();
+    Coremap(unsigned numPhyPages);
     ~Coremap();
-    void AllocMemory();
+    int AllocMemory();
+    void FreeMemory(unsigned virtualPage);
+private:
+
 }
 
-#endif // COREMAP__HH
+#endif // NACHOS_VMEM_COREMAP__HH
