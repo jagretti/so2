@@ -7,6 +7,6 @@ class Coremap {
     ~Coremap();
     int AllocMemory();
     void FreeMemory(unsigned virtualPage);
-}
+};
 
 #endif // NACHOS_VMEM_COREMAP__HH
