@@ -21,11 +21,11 @@ Coremap::AllocMemory()
     if (pageNum != -1) {
         return page;
     }
-    pageNum = position % size;
-    position++;
+    pageNum = position++ % size;
     VirutalEntry toDelete = virtualMem[pageNum];
-    AddresSpace *space = toDelete->space;
-    space->writeToSwap(toDelete->virtualPage);
+    AddressSpace *addressSpace = toDelete->addressSpace;
+    int virtualPage = toDelete->virtualPage;
+    addressSpace->writeToSwap(virtualPage);
     return pageNum;
 }
 

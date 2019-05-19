@@ -44,6 +44,9 @@ Machine *machine;              ///< User program memory and registers.
 Bitmap *userProgramFrameTable; ///< User program physical memory frame table.
 SynchConsole *sconsole;
 Thread **procTable;
+#endif
+
+#ifdef VMEM
 Coremap *coremap;
 #endif
 
@@ -188,8 +191,11 @@ Initialize(int argc, char **argv)
     userProgramFrameTable = new Bitmap(NUM_PHYS_PAGES);
     sconsole = new SynchConsole(nullptr, nullptr);
     procTable = new Thread*[MAX_PROCESS];
-    coremap = new Coremap(NUM_PHYS_PAGES);
     SetExceptionHandlers();
+#endif
+
+#ifdef VMEM
+    coremap = new Coremap(NUM_PHYS_PAGES);
 #endif
 
 #ifdef FILESYS

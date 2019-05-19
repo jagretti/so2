@@ -49,6 +49,7 @@ extern void freeId(SpaceId id);
 #endif
 
 #ifdef VMEM
+#include "vmem/coremap.hh"
 extern Coremap *coremap;
 #endif
 
