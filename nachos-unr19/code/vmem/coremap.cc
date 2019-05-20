@@ -2,12 +2,12 @@
 
 Coremap::Coremap(unsigned numPhyPages)
 {
-    unsigned size = numPhyPages;
-    VirtualEntry *virtualMem = new VirtualEntry[numPhyPages];
-    Bitmap *memoryMap = new Bitmap(numPhyPages);
+    size = numPhyPages;
+    virtualMem = new VirtualEntry[size];
+    memoryMap = new Bitmap(size);
 }
 
-Coremap::~Coremap
+Coremap::~Coremap()
 {
     delete []virtualMem;
     delete memoryMap;
@@ -19,13 +19,15 @@ Coremap::AllocMemory()
     static int position = 0;
     int pageNum = memoryMap->Find();
     if (pageNum != -1) {
-        return page;
+        return pageNum;
     }
-    pageNum = position++ % size;
-    VirutalEntry toDelete = virtualMem[pageNum];
-    AddressSpace *addressSpace = toDelete->addressSpace;
-    int virtualPage = toDelete->virtualPage;
-    addressSpace->writeToSwap(virtualPage);
+    printf("YATTTTAAAAAAAAAAAAAAAAAAAAA\n");
+    position = (position + 1) % size;
+    pageNum = position;
+    VirtualEntry toDelete = virtualMem[pageNum];
+    AddressSpace *addressSpace = toDelete.addressSpace;
+    int virtualPage = toDelete.virtualPage;
+    addressSpace->WriteToSwap(virtualPage);
     return pageNum;
 }
 
