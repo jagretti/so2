@@ -198,18 +198,20 @@ SyscallHandler(ExceptionType _et)
     case SC_WRITE: {
         int fd = machine->ReadRegister(6);
         int size = machine->ReadRegister(5);
+        DEBUG('k', "Se quiere escribir en la consola: |%d| caracteres\n", size);
         char *buff = new char[size];
         if (fd != 0) { // Error (fd == 0) no se puede escribir en stdin
             int arg = machine->ReadRegister(4);
             if (fd == 1) { // Escribe en stdout
                 ReadStringFromUser(arg, buff, size);
+                DEBUG('k', "Se quiere escribir en la consola: |%s|\n", buff);
                 for(int i = 0; i < size; i++) {
                     sconsole->WriteChar(buff[i]);
                 }
             } else {
                 OpenFile *f = currentThread->GetFile(fd);
                 if (f == nullptr) {
-                    DEBUG('k', "El archivo %d no esta abierto", fd);
+                    DEBUG('k', "El archivo %d no esta abierto\n", fd);
                     delete []buff;
                     break;
                 }
