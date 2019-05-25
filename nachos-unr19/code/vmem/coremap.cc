@@ -14,20 +14,20 @@ Coremap::~Coremap()
 }
 
 int
-Coremap::AllocMemory()
+Coremap::AllocMemory(AddressSpace *addrSpace, int virtualPage)
 {
     static int position = 0;
     int pageNum = memoryMap->Find();
-    if (pageNum != -1) {
-        return pageNum;
+    if (pageNum == -1) {
+        // printf("YATTTTAAAAAAAAAAAAAAAAAAAAA\n");
+        position = (position + 1) % size;
+        pageNum = position;
+        AddressSpace *entryAddrSpace = virtualMem[pageNum].addressSpace;
+        int entryVirtualPage = virtualMem[pageNum].virtualPage;
+        entryAddrSpace->WriteToSwap(entryVirtualPage);
     }
-    printf("YATTTTAAAAAAAAAAAAAAAAAAAAA\n");
-    position = (position + 1) % size;
-    pageNum = position;
-    VirtualEntry toDelete = virtualMem[pageNum];
-    AddressSpace *addressSpace = toDelete.addressSpace;
-    int virtualPage = toDelete.virtualPage;
-    addressSpace->WriteToSwap(virtualPage);
+    virtualMem[pageNum].virtualPage = virtualPage;
+    virtualMem[pageNum].addressSpace = addrSpace;
     return pageNum;
 }
 
@@ -35,4 +35,5 @@ void
 Coremap::FreeMemory(unsigned int virtualPage)
 {
     memoryMap->Clear(virtualPage);
+    // TODO free virtualMem
 }

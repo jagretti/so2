@@ -8,7 +8,7 @@ class Coremap {
  public:
     Coremap(unsigned numPhyPages);
     ~Coremap();
-    int AllocMemory();
+    int AllocMemory(AddressSpace* addrSpace, int virtualPage);
     void FreeMemory(unsigned virtualPage);
 private:
     unsigned size;

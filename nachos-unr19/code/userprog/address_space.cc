@@ -81,7 +81,7 @@ AddressSpace::AddressSpace(OpenFile *executable)
 
     // Check we are not trying to run anything too big -- at least until we
     // have virtual memory.
-    ASSERT(numPages <= NUM_PHYS_PAGES);
+    //ASSERT(numPages <= NUM_PHYS_PAGES);
 
     // Seteo si es valido o no el address_space
     isValid = numPages <= userProgramFrameTable->CountClear();
@@ -287,7 +287,7 @@ AddressSpace::LoadPage(unsigned virtualAddress)
     int virtualPage = virtualAddress / PAGE_SIZE;
     // Le asigno una fisica solo si no fue asignada antes
     if (pageTable[virtualPage].physicalPage == -1) {
-        pageTable[virtualPage].physicalPage = coremap->AllocMemory();
+        pageTable[virtualPage].physicalPage = coremap->AllocMemory(this, virtualPage);
         // first byte of the page
         unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
         for (unsigned i = 0; i < PAGE_SIZE; i++) {
@@ -296,7 +296,7 @@ AddressSpace::LoadPage(unsigned virtualAddress)
         }
     }
     if (pageTable[virtualPage].physicalPage == -2) {
-        unsigned physicalPage = coremap->AllocMemory();
+        unsigned physicalPage = coremap->AllocMemory(this, virtualPage);
         // TLB has the same dir?? TODO
         for (unsigned j = 0; j < TLB_SIZE; j++) {
             if (machine->GetMMU()->tlb[j].physicalPage == physicalPage) {
@@ -316,9 +316,11 @@ AddressSpace::LoadPage(unsigned virtualAddress)
 void
 AddressSpace::WriteToSwap(unsigned virtualPage) {
     char *mainMemory = machine->GetMMU()->mainMemory;
-    unsigned dir = pageTable[virtualPage].physicalPage;
+    unsigned dir =  pageTable[virtualPage].physicalPage;
     for (unsigned i = 0; i < PAGE_SIZE; i++) {
         // copy the mainMemory to the swap
         swapFile->WriteAt(&mainMemory[dir*PAGE_SIZE + i], 1, dir++);
     }
+    pageTable[virtualPage].physicalPage = -2;
+    pageTable[virtualPage].valid = false;
 }
