@@ -153,6 +153,8 @@ AddressSpace::~AddressSpace()
         }
     }
     delete [] pageTable;
+    // TODO currentThread->CloseFile(swapFile);
+    fileSystem->Remove(currentThread->GetName());
 }
 
 /// Set the initial values for the user-level register set.
