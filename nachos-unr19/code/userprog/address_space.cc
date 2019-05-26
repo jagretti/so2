@@ -155,6 +155,8 @@ AddressSpace::~AddressSpace()
     delete [] pageTable;
     // TODO currentThread->CloseFile(swapFile);
     fileSystem->Remove(currentThread->GetName());
+    //
+
 }
 
 /// Set the initial values for the user-level register set.
@@ -295,7 +297,7 @@ AddressSpace::LoadPage(unsigned virtualAddress)
     int virtualPage = virtualAddress / PAGE_SIZE;
     // Le asigno una fisica solo si no fue asignada antes
     if (pageTable[virtualPage].physicalPage == -1) {
-        pageTable[virtualPage].physicalPage = coremap->AllocMemory(this, virtualPage);
+        pageTable[virtualPage].physicalPage = memoryManager->AllocMemory(this, virtualPage);
         // first byte of the page
         unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
         for (unsigned i = 0; i < PAGE_SIZE; i++) {
@@ -304,7 +306,7 @@ AddressSpace::LoadPage(unsigned virtualAddress)
         }
     }
     if (pageTable[virtualPage].physicalPage == -2) {
-        unsigned physicalPage = coremap->AllocMemory(this, virtualPage);
+        unsigned physicalPage = memoryManager->AllocMemory(this, virtualPage);
         pageTable[virtualPage].physicalPage = physicalPage;
         unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
         for (unsigned i = 0; i < PAGE_SIZE; i++) {

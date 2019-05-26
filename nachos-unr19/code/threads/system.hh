@@ -50,7 +50,9 @@ extern void freeId(SpaceId id);
 
 #ifdef VMEM
 #include "vmem/coremap.hh"
+#include "vmem/memory_manager.hh"
 extern Coremap *coremap;
+extern MemoryManager *memoryManager;
 #endif
 
 #ifdef FILESYS_NEEDED  // *FILESYS* or *FILESYS_STUB*.

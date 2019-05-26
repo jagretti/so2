@@ -48,6 +48,7 @@ Thread **procTable;
 
 #ifdef VMEM
 Coremap *coremap;
+MemoryManager *memoryManager;
 #endif
 
 #ifdef NETWORK
@@ -195,7 +196,8 @@ Initialize(int argc, char **argv)
 #endif
 
 #ifdef VMEM
-    coremap = new Coremap(NUM_PHYS_PAGES);
+    coremap = new Coremap[NUM_PHYS_PAGES];
+    memoryManager = new MemoryManager(coremap);
 #endif
 
 #ifdef FILESYS
