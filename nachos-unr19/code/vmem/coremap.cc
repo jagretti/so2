@@ -24,7 +24,7 @@ Coremap::AllocMemory(AddressSpace *addrSpace, int virtualPage)
         pageNum = position;
         AddressSpace *entryAddrSpace = virtualMem[pageNum].addressSpace;
         int entryVirtualPage = virtualMem[pageNum].virtualPage;
-        entryAddrSpace->WriteToSwap(entryVirtualPage);
+        entryAddrSpace->UnloadPage(entryVirtualPage);
     }
     virtualMem[pageNum].virtualPage = virtualPage;
     virtualMem[pageNum].addressSpace = addrSpace;

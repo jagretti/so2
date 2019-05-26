@@ -195,6 +195,11 @@ AddressSpace::SaveState()
             this->SaveEntry(machine->GetMMU()->tlb[i]);
         }
     }
+    for (unsigned i = 0; i < numPages; i++) {
+        if (pageTable[i].physicalPage != -1 || pageTable[i].physicalPage != -2) {
+            UnloadPage(i);
+        }
+    }
 #endif
 }
 
@@ -309,33 +314,41 @@ AddressSpace::LoadPage(unsigned virtualAddress)
     pageTable[virtualAddress / PAGE_SIZE].valid = true;
 }
 
+int
+isInTLB(TranslationEntry entry)
+{
+    int inTLB = -1;
+    for (unsigned i = 0; i < TLB_SIZE; i++) {
+        if (machine->GetMMU()->tlb[i].physicalPage == entry.physicalPage) {
+            inTLB = i;
+        }
+    }
+    return inTLB;
+}
+
 void
-AddressSpace::WriteToSwap(unsigned virtualPage) {
+AddressSpace::UnloadPage(unsigned virtualPage)
+{
+    int inTLB = isInTLB(pageTable[virtualPage]);
+    if (inTLB != -1 && machine->GetMMU()->tlb[inTLB].valid) {
+        WriteToSwap(virtualPage);
+        machine->GetMMU()->tlb[inTLB].valid = false;  // clean the tlb
+    } else {
+        WriteToSwap(virtualPage);
+    }
+    pageTable[virtualPage].valid = false;
+}
+
+void
+AddressSpace::WriteToSwap(unsigned virtualPage)
+{
+    if (!pageTable[virtualPage].valid) return;
     char *mainMemory = machine->GetMMU()->mainMemory;
     unsigned physicalAddress = pageTable[virtualPage].physicalPage * PAGE_SIZE;
     unsigned virtualAddress = virtualPage * PAGE_SIZE;
-    char *buff1 = new char[PAGE_SIZE];
-    char *buff2 = new char[PAGE_SIZE];
     for (unsigned i = 0; i < PAGE_SIZE; i++) {
         // copy the mainMemory to the swap
-        buff1[i] = mainMemory[physicalAddress + i];
         swapFile->WriteAt(&mainMemory[physicalAddress + i], 1, virtualAddress++);
     }
-    virtualAddress = virtualPage * PAGE_SIZE;
-    for (unsigned i = 0; i < PAGE_SIZE; i++) {
-        // copy the mainMemory to the swap
-        swapFile->ReadAt(&mainMemory[physicalAddress + i], 1, virtualAddress++);
-        buff2[i] = mainMemory[physicalAddress + i];
-    }
-    for (unsigned i = 0; i < PAGE_SIZE; i++) {
-        ASSERT(buff1[i] == buff2[i]);
-    }
-    // clean tlb
-    for (unsigned i = 0; i < TLB_SIZE; i++) {
-        if (machine->GetMMU()->tlb[i].physicalPage == pageTable[virtualPage].physicalPage) {
-            machine->GetMMU()->tlb[i].valid = false;
-        }
-    }
     pageTable[virtualPage].physicalPage = -2;
-    pageTable[virtualPage].valid = false;
 }

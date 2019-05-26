@@ -53,7 +53,7 @@ public:
     // Carga una pagina desde el executable
     void LoadPage(unsigned virtualAddress);
 
-    void WriteToSwap(unsigned virtualPage);
+    void UnloadPage(unsigned virtualPage);
 private:
 
     /// Assume linear page table translation for now!
@@ -73,6 +73,9 @@ private:
 
     /// swap file
     OpenFile *swapFile;
+
+    ///
+    void WriteToSwap(unsigned virtualPage);
 };
 
 
