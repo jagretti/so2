@@ -86,7 +86,9 @@ AddressSpace::AddressSpace(OpenFile *executable)
     // Seteo si es valido o no el address_space
     isValid = true; //numPages <= userProgramFrameTable->CountClear();
     // TODO
-    const char *filename = currentThread->GetName();
+    char *str = new char[20];
+    sprintf(str, "%d", size);
+    const char *filename = str; //currentThread->GetName();
     fileSystem->Create(filename, 0);
     swapFile = fileSystem->Open(filename);
     currentThread->AddFile(swapFile);
@@ -148,8 +150,8 @@ AddressSpace::~AddressSpace()
     for (unsigned i = 0; i < numPages; i++) {
         // Si tiene asignada pagina fisica, la borro
         if (pageTable[i].physicalPage != -1) {
-            userProgramFrameTable->Clear(pageTable[i].physicalPage);
-            memset(&(machine->GetMMU()->mainMemory[pageTable[i].physicalPage * PAGE_SIZE]), 0, PAGE_SIZE);
+            //userProgramFrameTable->Clear(pageTable[i].physicalPage);
+            //memset(&(machine->GetMMU()->mainMemory[pageTable[i].physicalPage * PAGE_SIZE]), 0, PAGE_SIZE);
         }
     }
     delete [] pageTable;
