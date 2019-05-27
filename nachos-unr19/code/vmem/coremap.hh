@@ -7,6 +7,8 @@ class Coremap {
 public:
     AddressSpace *addressSpace;
     unsigned virtualPage;
+    bool isAllocated;
+    bool inUse;
 };
 
 #endif // NACHOS_VMEM_COREMAP__HH

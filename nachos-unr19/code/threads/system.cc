@@ -197,7 +197,7 @@ Initialize(int argc, char **argv)
 
 #ifdef VMEM
     coremap = new Coremap[NUM_PHYS_PAGES];
-    memoryManager = new MemoryManager(coremap);
+    memoryManager = new MemoryManager(coremap, userProgramFrameTable);
 #endif
 
 #ifdef FILESYS
