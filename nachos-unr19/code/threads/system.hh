@@ -42,7 +42,7 @@ extern Timer *timer;                 ///< The hardware alarm clock.
 extern Machine *machine;  // User program memory and registers.
 extern Bitmap *userProgramFrameTable;
 extern SynchConsole *sconsole;
-extern Thread **procTableble;
+extern Thread **procTable;
 
 extern SpaceId getNextId(Thread *t);
 extern void freeId(SpaceId id);
