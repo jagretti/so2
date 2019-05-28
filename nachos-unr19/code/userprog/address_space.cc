@@ -289,7 +289,7 @@ void copyVirtualAddressToMemory(unsigned virtualAddress, OpenFile *file, noffHea
 }
 
 //----------------------------------------------------------------------
-// Carga una pagina a partir del ejecutable (usado en USE_DL)
+// Carga la pagina donde se encuentra la virtualAddress
 //----------------------------------------------------------------------
 void
 AddressSpace::LoadPage(unsigned virtualAddress)
@@ -307,6 +307,7 @@ AddressSpace::LoadPage(unsigned virtualAddress)
                                        mainMemory, pageTable);
         }
     }
+    // La pagina esta en swap
     if (pageTable[virtualPage].physicalPage == -2) {
         unsigned physicalPage = memoryManager->AllocMemory(this, virtualPage);
         pageTable[virtualPage].physicalPage = physicalPage;
@@ -320,6 +321,9 @@ AddressSpace::LoadPage(unsigned virtualAddress)
     pageTable[virtualAddress / PAGE_SIZE].valid = true;
 }
 
+//----------------------------------------------------------------------
+// Chequea si la entry esta o no en la tlb
+//----------------------------------------------------------------------
 int
 isInTLB(TranslationEntry entry)
 {
@@ -332,19 +336,23 @@ isInTLB(TranslationEntry entry)
     return inTLB;
 }
 
+//----------------------------------------------------------------------
+// Borra una pagina de la RAM y la escribe en la swap
+//----------------------------------------------------------------------
 void
 AddressSpace::UnloadPage(unsigned virtualPage)
 {
     int inTLB = isInTLB(pageTable[virtualPage]);
-    if (inTLB != -1 && machine->GetMMU()->tlb[inTLB].valid) {
-        WriteToSwap(virtualPage);
+    // Si la pagina esta en la tlb la limpio primero
+    if (inTLB != -1 && machine->GetMMU()->tlb[inTLB].valid)
         machine->GetMMU()->tlb[inTLB].valid = false;  // clean the tlb
-    } else {
-        WriteToSwap(virtualPage);
-    }
+    WriteToSwap(virtualPage); // Siempre va a la swap
     pageTable[virtualPage].valid = false;
 }
 
+//----------------------------------------------------------------------
+// Escribe una pagina en swap
+//----------------------------------------------------------------------
 void
 AddressSpace::WriteToSwap(unsigned virtualPage)
 {
@@ -356,5 +364,6 @@ AddressSpace::WriteToSwap(unsigned virtualPage)
         // copy the mainMemory to the swap
         swapFile->WriteAt(&mainMemory[physicalAddress + i], 1, virtualAddress++);
     }
+    // Seteo que esta pagina esta en swap
     pageTable[virtualPage].physicalPage = -2;
 }

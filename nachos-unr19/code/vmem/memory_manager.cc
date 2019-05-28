@@ -1,5 +1,9 @@
 #include "vmem/memory_manager.hh"
 
+//-------------------------------------------------
+// Clase que contiene al coremap y bitmap
+// para funcionalidades de Virtual Memory
+//-------------------------------------------------
 MemoryManager::MemoryManager(Coremap *cm, Bitmap *bm)
 {
     coremap = cm;
@@ -8,6 +12,12 @@ MemoryManager::MemoryManager(Coremap *cm, Bitmap *bm)
 
 MemoryManager::~MemoryManager() {}
 
+//-------------------------------------------------
+// AllocMemory: Alloca un bloque de memoria para
+// una nueva pagina, si no hay bloques libres, libera
+// uno y lo asigna, enviando la pagina eliminada a
+// swap
+//-------------------------------------------------
 int
 MemoryManager::AllocMemory(AddressSpace *addrSpace, unsigned virtualPage)
 {
@@ -25,6 +35,10 @@ MemoryManager::AllocMemory(AddressSpace *addrSpace, unsigned virtualPage)
     return pageNum;
 }
 
+//-------------------------------------------------
+// FreeMemory: Libera la pagina del address space
+// y del coremap
+//-------------------------------------------------
 void
 MemoryManager::FreeMemory(unsigned virtualPage)
 {
