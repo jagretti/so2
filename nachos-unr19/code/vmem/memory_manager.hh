@@ -14,6 +14,8 @@ public:
     ~MemoryManager();
     int AllocMemory(AddressSpace *addressSpace, unsigned virtualPage);
     void FreeMemory(unsigned virtualPage);
+    unsigned GetPageNumQueue();
+    unsigned GetPageNumLRU();
 
 private:
     Coremap *coremap;
