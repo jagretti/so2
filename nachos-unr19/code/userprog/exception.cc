@@ -297,7 +297,8 @@ SyscallHandler(ExceptionType _et)
             break;
         }
         t->space = addr;
-        int id = getNextId(t);
+        SpaceId id = getNextId(t);
+        t->SetPid(id);
         char **args = SaveArgs(args_addr);
         t->Fork(beginProcess, args);
         DEBUG('k', "Ejecutar  %s args[1] %s\n", args[0], args[1]);

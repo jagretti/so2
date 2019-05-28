@@ -54,6 +54,8 @@ public:
     void LoadPage(unsigned virtualAddress);
 
     void UnloadPage(unsigned virtualPage);
+
+    void CreateSwapFile();
 private:
 
     /// Assume linear page table translation for now!

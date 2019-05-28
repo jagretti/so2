@@ -26,5 +26,6 @@ DISK
 /code/userland/sort
 /code/userland/tiny_shell
 /code/userland/*.coff
+.gdb_history
 
 /code/tests/unittests

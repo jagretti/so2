@@ -134,6 +134,10 @@ public:
 
     int GetPriority();
 
+    void SetPid(int pid);
+
+    int GetPid();
+
 private:
     // Some of the private data for this class is listed above.
 
@@ -147,6 +151,7 @@ private:
 
     const char *name;
 
+    int pid;
     int priority;
     bool useJoin;
     Port *joinPort;

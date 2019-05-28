@@ -86,12 +86,6 @@ AddressSpace::AddressSpace(OpenFile *executable)
     // Seteo si es valido o no el address_space
     isValid = true; //numPages <= userProgramFrameTable->CountClear();
     // TODO
-    char *str = new char[20];
-    sprintf(str, "%d", size);
-    const char *filename = str; //currentThread->GetName();
-    fileSystem->Create(filename, 0);
-    swapFile = fileSystem->Open(filename);
-    currentThread->AddFile(swapFile);
 
     DEBUG('a', "Initializing address space, num pages %u, size %u\n",
           numPages, size);
@@ -350,6 +344,17 @@ AddressSpace::UnloadPage(unsigned virtualPage)
     pageTable[virtualPage].valid = false;
 }
 
+void
+AddressSpace::CreateSwapFile()
+{
+    char *filename = new char[20];
+    sprintf(filename, "swap.%d", currentThread->GetPid());
+    fileSystem->Create(filename, 0);
+    swapFile = fileSystem->Open(filename);
+    currentThread->AddFile(swapFile);
+    delete filename;
+}
+
 //----------------------------------------------------------------------
 // Escribe una pagina en swap
 //----------------------------------------------------------------------
@@ -357,6 +362,9 @@ void
 AddressSpace::WriteToSwap(unsigned virtualPage)
 {
     if (!pageTable[virtualPage].valid) return;
+    if (swapFile == nullptr) {
+        CreateSwapFile();
+    }
     char *mainMemory = machine->GetMMU()->mainMemory;
     unsigned physicalAddress = pageTable[virtualPage].physicalPage * PAGE_SIZE;
     unsigned virtualAddress = virtualPage * PAGE_SIZE;

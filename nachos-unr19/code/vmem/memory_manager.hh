@@ -4,6 +4,7 @@
 #include "lib/bitmap.hh"
 #include "machine/mmu.hh"
 #include "vmem/coremap.hh"
+#include "threads/synch.hh"
 
 
 class MemoryManager {
@@ -17,5 +18,6 @@ public:
 private:
     Coremap *coremap;
     Bitmap *bitmap;
+    Lock *lock;
 };
 #endif // NACHOS_VMEM_MEMORY_MANAGER__HH

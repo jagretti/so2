@@ -8,6 +8,7 @@ MemoryManager::MemoryManager(Coremap *cm, Bitmap *bm)
 {
     coremap = cm;
     bitmap = bm; // userProgramframetable
+    lock = new Lock("MML");
 }
 
 MemoryManager::~MemoryManager() {}
@@ -21,6 +22,7 @@ MemoryManager::~MemoryManager() {}
 int
 MemoryManager::AllocMemory(AddressSpace *addrSpace, unsigned virtualPage)
 {
+    lock->Acquire();
     static unsigned pageNum = 0;
     unsigned dir = bitmap->Find();
     if (dir == -1) {
@@ -32,6 +34,7 @@ MemoryManager::AllocMemory(AddressSpace *addrSpace, unsigned virtualPage)
     coremap[pageNum].virtualPage = virtualPage;
     coremap[pageNum].addressSpace = addrSpace;
     coremap[pageNum].isAllocated = true;
+    lock->Release();
     return pageNum;
 }
 
