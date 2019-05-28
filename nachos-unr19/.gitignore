@@ -19,6 +19,10 @@ DISK
 /code/userland/halt
 /code/userland/matmult
 /code/userland/shell
+/code/userland/cat
+/code/userland/cp
+/code/userland/printA
+/code/userland/printB
 /code/userland/sort
 /code/userland/tiny_shell
 /code/userland/*.coff
