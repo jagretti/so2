@@ -11,7 +11,10 @@ MemoryManager::MemoryManager(Coremap *cm, Bitmap *bm)
     lock = new Lock("MML");
 }
 
-MemoryManager::~MemoryManager() {}
+MemoryManager::~MemoryManager() 
+{
+    delete lock;
+}
 
 //-------------------------------------------------
 // AllocMemory: Alloca un bloque de memoria para

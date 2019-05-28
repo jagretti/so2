@@ -344,6 +344,9 @@ AddressSpace::UnloadPage(unsigned virtualPage)
     pageTable[virtualPage].valid = false;
 }
 
+//----------------------------------------------------------------------
+// Crea el swapFile para el address space actual
+//----------------------------------------------------------------------
 void
 AddressSpace::CreateSwapFile()
 {
