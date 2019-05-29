@@ -11,7 +11,7 @@ MemoryManager::MemoryManager(Coremap *cm, Bitmap *bm)
     lock = new Lock("MML");
 }
 
-MemoryManager::~MemoryManager() 
+MemoryManager::~MemoryManager()
 {
     delete lock;
 }
@@ -27,7 +27,7 @@ MemoryManager::AllocMemory(AddressSpace *addrSpace, unsigned virtualPage)
 {
     lock->Acquire();
     static unsigned queue_page = 0;
-    unsigned pageNum = GetPageNumQueue(queue_page); 
+    unsigned pageNum = GetPageNumQueue(queue_page);
     if (coremap[pageNum].isAllocated) FreeMemory(pageNum);
     coremap[pageNum].virtualPage = virtualPage;
     coremap[pageNum].addressSpace = addrSpace;
@@ -38,7 +38,7 @@ MemoryManager::AllocMemory(AddressSpace *addrSpace, unsigned virtualPage)
 }
 
 //-------------------------------------------------
-// 
+//
 //-------------------------------------------------
 unsigned
 MemoryManager::GetPageNumQueue(unsigned queue_page)
@@ -54,7 +54,7 @@ MemoryManager::GetPageNumQueue(unsigned queue_page)
 }
 
 //-------------------------------------------------
-// 
+//
 //-------------------------------------------------
 unsigned
 MemoryManager::GetPageNumLRU()
