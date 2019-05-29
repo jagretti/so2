@@ -14,7 +14,7 @@ public:
     ~MemoryManager();
     int AllocMemory(AddressSpace *addressSpace, unsigned virtualPage);
     void FreeMemory(unsigned virtualPage);
-    unsigned GetPageNumQueue();
+    unsigned GetPageNumQueue(unsigned queue_page);
     unsigned GetPageNumLRU();
 
 private:

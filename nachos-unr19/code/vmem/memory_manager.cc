@@ -26,11 +26,13 @@ int
 MemoryManager::AllocMemory(AddressSpace *addrSpace, unsigned virtualPage)
 {
     lock->Acquire();
-    unsigned pageNum = GetPageNumQueue(); 
+    static unsigned queue_page = 0;
+    unsigned pageNum = GetPageNumQueue(queue_page); 
     if (coremap[pageNum].isAllocated) FreeMemory(pageNum);
     coremap[pageNum].virtualPage = virtualPage;
     coremap[pageNum].addressSpace = addrSpace;
     coremap[pageNum].isAllocated = true;
+    queue_page = (queue_page + 1) % NUM_PHYS_PAGES;
     lock->Release();
     return pageNum;
 }
@@ -39,12 +41,12 @@ MemoryManager::AllocMemory(AddressSpace *addrSpace, unsigned virtualPage)
 // 
 //-------------------------------------------------
 unsigned
-MemoryManager::GetPageNumQueue()
+MemoryManager::GetPageNumQueue(unsigned queue_page)
 {
     unsigned dir = bitmap->Find();
-    static unsigned page = 0;
+    unsigned page;
     if (dir == -1) {
-        page = (page + 1) % NUM_PHYS_PAGES;
+        page = queue_page;
     } else {
         page = dir;
     }
