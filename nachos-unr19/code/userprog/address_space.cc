@@ -144,15 +144,15 @@ AddressSpace::~AddressSpace()
     for (unsigned i = 0; i < numPages; i++) {
         // Si tiene asignada pagina fisica, la borro
         if (pageTable[i].physicalPage != -1) {
-            //userProgramFrameTable->Clear(pageTable[i].physicalPage);
+            //userProramFrameTable->Clear(pageTable[i].physicalPage);
             //memset(&(machine->GetMMU()->mainMemory[pageTable[i].physicalPage * PAGE_SIZE]), 0, PAGE_SIZE);
         }
     }
     delete [] pageTable;
     // TODO currentThread->CloseFile(swapFile);
-    fileSystem->Remove(currentThread->GetName());
-    //
-
+    char *filename = GetSwapFileName();
+    fileSystem->Remove(filename);
+    delete [] filename;
 }
 
 /// Set the initial values for the user-level register set.
@@ -344,14 +344,21 @@ AddressSpace::UnloadPage(unsigned virtualPage)
     pageTable[virtualPage].valid = false;
 }
 
+char *
+AddressSpace::GetSwapFileName()
+{
+    char *filename = new char[SWAP_FILE_MAX_NAME_SIZE];
+    sprintf(filename, "swap.%d", currentThread->GetPid());
+    return filename;
+}
+
 //----------------------------------------------------------------------
 // Crea el swapFile para el address space actual
 //----------------------------------------------------------------------
 void
 AddressSpace::CreateSwapFile()
 {
-    char *filename = new char[20];
-    sprintf(filename, "swap.%d", currentThread->GetPid());
+    char *filename = GetSwapFileName();
     fileSystem->Create(filename, 0);
     swapFile = fileSystem->Open(filename);
     currentThread->AddFile(swapFile);

@@ -20,7 +20,7 @@
 
 
 const unsigned USER_STACK_SIZE = 1024;  ///< Increase this as necessary!
-
+const unsigned SWAP_FILE_MAX_NAME_SIZE = 32;
 
 class AddressSpace {
 public:
@@ -55,7 +55,6 @@ public:
 
     void UnloadPage(unsigned virtualPage);
 
-    void CreateSwapFile();
 private:
 
     /// Assume linear page table translation for now!
@@ -78,6 +77,12 @@ private:
 
     ///
     void WriteToSwap(unsigned virtualPage);
+
+    ///
+    void CreateSwapFile();
+
+    ///
+    char *GetSwapFileName();
 };
 
 
