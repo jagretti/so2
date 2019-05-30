@@ -382,6 +382,7 @@ AddressSpace::WriteToSwap(unsigned virtualPage)
         // copy the mainMemory to the swap
         swapFile->WriteAt(&mainMemory[physicalAddress + i], 1, virtualAddress++);
     }
+    memset(&mainMemory[physicalAddress], 0, PAGE_SIZE);
     // Seteo que esta pagina esta en swap
     pageTable[virtualPage].physicalPage = -2;
 }
