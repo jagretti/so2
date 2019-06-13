@@ -72,4 +72,13 @@ MemoryManager::FreeMemory(unsigned virtualPage)
     AddressSpace *entryAddrSpace = coremap[virtualPage].addressSpace;
     int entryVirtualPage = coremap[virtualPage].virtualPage;
     entryAddrSpace->UnloadPage(entryVirtualPage);
+    coremap[virtualPage].isAllocated = false;
+}
+
+void
+MemoryManager::CleanMemory(AddressSpace *addr, unsigned page)
+{
+    if (coremap[page].addressSpace == addr) {
+        coremap[page].isAllocated = false;
+    }
 }

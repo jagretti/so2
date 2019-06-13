@@ -196,7 +196,7 @@ AddressSpace::SaveState()
         }
     }
     for (unsigned i = 0; i < numPages; i++) {
-        if (pageTable[i].physicalPage != -1 || pageTable[i].physicalPage != -2) {
+        if (pageTable[i].physicalPage != -1 &&  pageTable[i].physicalPage != -2) {
             UnloadPage(i);
         }
     }
@@ -336,11 +336,15 @@ isInTLB(TranslationEntry entry)
 void
 AddressSpace::UnloadPage(unsigned virtualPage)
 {
+    ASSERT(pageTable[virtualPage].physicalPage != -1);
     int inTLB = isInTLB(pageTable[virtualPage]);
     // Si la pagina esta en la tlb la limpio primero
     if (inTLB != -1 && machine->GetMMU()->tlb[inTLB].valid)
         machine->GetMMU()->tlb[inTLB].valid = false;  // clean the tlb
     WriteToSwap(virtualPage); // Siempre va a la swap
+    memoryManager->CleanMemory(this, pageTable[virtualPage].physicalPage);
+    // Seteo que esta pagina esta en swap
+    pageTable[virtualPage].physicalPage = -2;
     pageTable[virtualPage].valid = false;
 }
 
@@ -383,6 +387,4 @@ AddressSpace::WriteToSwap(unsigned virtualPage)
         swapFile->WriteAt(&mainMemory[physicalAddress + i], 1, virtualAddress++);
     }
     memset(&mainMemory[physicalAddress], 0, PAGE_SIZE);
-    // Seteo que esta pagina esta en swap
-    pageTable[virtualPage].physicalPage = -2;
 }
