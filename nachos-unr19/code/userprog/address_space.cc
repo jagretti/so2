@@ -292,7 +292,7 @@ AddressSpace::LoadPage(unsigned virtualAddress)
     // Busco pagina virtual
     int virtualPage = virtualAddress / PAGE_SIZE;
     // Le asigno una fisica solo si no fue asignada antes
-    if (pageTable[virtualPage].physicalPage == -1) {
+    if (inFile(pageTable[virtualPage].physicalPage)) {
         pageTable[virtualPage].physicalPage = memoryManager->AllocMemory(this, virtualPage);
         // first byte of the page
         unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
@@ -302,7 +302,7 @@ AddressSpace::LoadPage(unsigned virtualAddress)
         }
     }
     // La pagina esta en swap
-    if (pageTable[virtualPage].physicalPage == -2) {
+    if (inSwap(pageTable[virtualPage].physicalPage)) {
         unsigned physicalPage = memoryManager->AllocMemory(this, virtualPage);
         pageTable[virtualPage].physicalPage = physicalPage;
         unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
@@ -336,7 +336,7 @@ isInTLB(TranslationEntry entry)
 void
 AddressSpace::UnloadPage(unsigned virtualPage)
 {
-    ASSERT(pageTable[virtualPage].physicalPage != -1);
+    ASSERT(!inFileOrSwap(pageTable[virtualPage].physicalPage));
     int inTLB = isInTLB(pageTable[virtualPage]);
     // Si la pagina esta en la tlb la limpio primero
     if (inTLB != -1 && machine->GetMMU()->tlb[inTLB].valid)
@@ -344,7 +344,7 @@ AddressSpace::UnloadPage(unsigned virtualPage)
     WriteToSwap(virtualPage); // Siempre va a la swap
     memoryManager->CleanMemory(this, pageTable[virtualPage].physicalPage);
     // Seteo que esta pagina esta en swap
-    pageTable[virtualPage].physicalPage = -2;
+    pageTable[virtualPage].physicalPage = PAGE_IN_SWAP;
     pageTable[virtualPage].valid = false;
 }
 

@@ -22,6 +22,13 @@
 const unsigned USER_STACK_SIZE = 1024;  ///< Increase this as necessary!
 const unsigned SWAP_FILE_MAX_NAME_SIZE = 32;
 
+const unsigned PAGE_IN_FILE = -1;
+const unsigned PAGE_IN_SWAP = -2;
+
+#define inFile(page) ((page) == PAGE_IN_FILE)
+#define inSwap(page) ((page) == PAGE_IN_SWAP)
+#define inFileOrSwap(page) (inFile(page) || inSwap(page))
+
 class AddressSpace {
 public:
 

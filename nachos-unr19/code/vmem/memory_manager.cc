@@ -25,7 +25,7 @@ MemoryManager::~MemoryManager()
 int
 MemoryManager::AllocMemory(AddressSpace *addrSpace, unsigned virtualPage)
 {
-    lock->Acquire();
+    // lock->Acquire();
     static unsigned queue_page = 0;
     unsigned pageNum = GetPageNumQueue(queue_page);
     if (coremap[pageNum].isAllocated) FreeMemory(pageNum);
@@ -33,7 +33,7 @@ MemoryManager::AllocMemory(AddressSpace *addrSpace, unsigned virtualPage)
     coremap[pageNum].addressSpace = addrSpace;
     coremap[pageNum].isAllocated = true;
     queue_page = (queue_page + 1) % NUM_PHYS_PAGES;
-    lock->Release();
+    // lock->Release();
     return pageNum;
 }
 
