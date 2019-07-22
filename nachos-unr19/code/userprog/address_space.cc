@@ -141,11 +141,12 @@ AddressSpace::AddressSpace(OpenFile *executable)
 /// VER SI ES NECESARIO EL IF
 AddressSpace::~AddressSpace()
 {
+    char *mainMemory = machine->GetMMU()->mainMemory;
     for (unsigned i = 0; i < numPages; i++) {
         // Si tiene asignada pagina fisica, la borro
-        if (pageTable[i].physicalPage != -1) {
-            //userProramFrameTable->Clear(pageTable[i].physicalPage);
-            //memset(&(machine->GetMMU()->mainMemory[pageTable[i].physicalPage * PAGE_SIZE]), 0, PAGE_SIZE);
+        if (!inFileOrSwap(pageTable[i].physicalPage)) {
+            memoryManager->CleanMemory(this, pageTable[i].physicalPage);
+            //            memset(&(mainMemory[pageTable[i].physicalPage * PAGE_SIZE]), 0, PAGE_SIZE);
         }
     }
     delete [] pageTable;
@@ -192,13 +193,12 @@ AddressSpace::SaveState()
 #ifdef USE_TLB
     for (int i = 0; i < TLB_SIZE; i++) {
         if (machine->GetMMU()->tlb[i].dirty and machine->GetMMU()->tlb[i].valid) { //PREGUNTAR SI ESTA BIEN!!
-            this->SaveEntry(machine->GetMMU()->tlb[i]);
+            //this->SaveEntry(machine->GetMMU()->tlb[i]);
+            unsigned virtualPage = machine->GetMMU()->tlb[i].virtualPage;
+            pageTable[virtualPage].valid = true;
+            pageTable[virtualPage].dirty = false;
         }
-    }
-    for (unsigned i = 0; i < numPages; i++) {
-        if (pageTable[i].physicalPage != -1 &&  pageTable[i].physicalPage != -2) {
-            UnloadPage(i);
-        }
+        machine->GetMMU()->tlb[i].valid = false;
     }
 #endif
 }
@@ -240,6 +240,7 @@ AddressSpace::IsValid()
 TranslationEntry
 AddressSpace::GetEntry(int virtualPageIndex)
 {
+    ASSERT(virtualPageIndex < numPages);
     return this->pageTable[virtualPageIndex];
 }
 
@@ -285,7 +286,7 @@ void copyVirtualAddressToMemory(unsigned virtualAddress, OpenFile *file, noffHea
 //----------------------------------------------------------------------
 // Carga la pagina donde se encuentra la virtualAddress
 //----------------------------------------------------------------------
-void
+unsigned
 AddressSpace::LoadPage(unsigned virtualAddress)
 {
     char *mainMemory = machine->GetMMU()->mainMemory;
@@ -303,16 +304,19 @@ AddressSpace::LoadPage(unsigned virtualAddress)
     }
     // La pagina esta en swap
     if (inSwap(pageTable[virtualPage].physicalPage)) {
+        ASSERT(false);
         unsigned physicalPage = memoryManager->AllocMemory(this, virtualPage);
         pageTable[virtualPage].physicalPage = physicalPage;
         unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
-        for (unsigned i = 0; i < PAGE_SIZE; i++) {
+        //for (unsigned i = 0; i < PAGE_SIZE; i++) {
             // copy to the alloc(ed) memory the PAGE
-            swapFile->ReadAt(&mainMemory[physicalPage*PAGE_SIZE + i], 1, address++);
-        }
+            //swapFile->ReadAt(&mainMemory[physicalPage*PAGE_SIZE + i], 1, address++);
+        //}
+        swapFile->ReadAt(&mainMemory[physicalPage*PAGE_SIZE], PAGE_SIZE, address);
     }
     pageTable[virtualAddress / PAGE_SIZE].dirty = false;
     pageTable[virtualAddress / PAGE_SIZE].valid = true;
+    return virtualPage;
 }
 
 //----------------------------------------------------------------------
@@ -339,12 +343,14 @@ AddressSpace::UnloadPage(unsigned virtualPage)
     ASSERT(!inFileOrSwap(pageTable[virtualPage].physicalPage));
     int inTLB = isInTLB(pageTable[virtualPage]);
     // Si la pagina esta en la tlb la limpio primero
-    if (inTLB != -1 && machine->GetMMU()->tlb[inTLB].valid)
+    if (inTLB != -1 && machine->GetMMU()->tlb[inTLB].valid) {
         machine->GetMMU()->tlb[inTLB].valid = false;  // clean the tlb
+    }
+    //
     WriteToSwap(virtualPage); // Siempre va a la swap
     memoryManager->CleanMemory(this, pageTable[virtualPage].physicalPage);
     // Seteo que esta pagina esta en swap
-    pageTable[virtualPage].physicalPage = PAGE_IN_SWAP;
+    pageTable[virtualPage].physicalPage = PAGE_IN_FILE;
     pageTable[virtualPage].valid = false;
 }
 
@@ -375,16 +381,18 @@ AddressSpace::CreateSwapFile()
 void
 AddressSpace::WriteToSwap(unsigned virtualPage)
 {
-    if (!pageTable[virtualPage].valid) return;
+    ASSERT(pageTable[virtualPage].valid);
+    ASSERT(!inFileOrSwap(pageTable[virtualPage].physicalPage));
     if (swapFile == nullptr) {
         CreateSwapFile();
     }
     char *mainMemory = machine->GetMMU()->mainMemory;
     unsigned physicalAddress = pageTable[virtualPage].physicalPage * PAGE_SIZE;
     unsigned virtualAddress = virtualPage * PAGE_SIZE;
-    for (unsigned i = 0; i < PAGE_SIZE; i++) {
+    //for (unsigned i = 0; i < PAGE_SIZE; i++) {
         // copy the mainMemory to the swap
-        swapFile->WriteAt(&mainMemory[physicalAddress + i], 1, virtualAddress++);
-    }
+        //swapFile->WriteAt(&mainMemory[physicalAddress + i], 1, virtualAddress++);
+    //}
+    swapFile->WriteAt(&mainMemory[physicalAddress], PAGE_SIZE, virtualAddress);
     memset(&mainMemory[physicalAddress], 0, PAGE_SIZE);
 }

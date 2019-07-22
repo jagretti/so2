@@ -58,7 +58,7 @@ public:
     void SaveEntry(TranslationEntry toSave);
 
     // Carga una pagina desde el executable
-    void LoadPage(unsigned virtualAddress);
+    unsigned LoadPage(unsigned virtualAddress);
 
     void UnloadPage(unsigned virtualPage);
 

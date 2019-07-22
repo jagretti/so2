@@ -320,14 +320,16 @@ PageFaultHandler(ExceptionType et)
     // Posicion que va a ir la pagina en la tlb
     static int position = 0;
     int virtualAddr = machine->ReadRegister(BAD_VADDR_REG);
+    ASSERT(virtualAddr >= 0);
     int virtualPage = virtualAddr / PAGE_SIZE;
     // Busco la entrada en el espacio de direcciones del thread actual
     TranslationEntry entry = currentThread->space->GetEntry(virtualPage);
     #ifdef USE_DL
-        if (!entry.valid) {
-            currentThread->space->LoadPage(virtualAddr);
-            entry = currentThread->space->GetEntry(virtualPage);
-        }
+    if (inFileOrSwap(entry.physicalPage)) {
+        unsigned testPage = currentThread->space->LoadPage(virtualAddr);
+        ASSERT(testPage == ((unsigned)virtualPage));
+        entry = currentThread->space->GetEntry(virtualPage);
+    }
     #endif
     SaveInTLB(entry, position);
     // position varia entre 0,1,2,3 y asi sucesivamente haciendo un FIFO sobre la tlb
