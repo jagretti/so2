@@ -109,10 +109,6 @@ main(void)
         if (lineSize == 0)
             continue;
 
-        if (PrepareArguments(line, argv, MAX_ARG_COUNT) == 0) {
-            WriteError("too many arguments.", OUTPUT);
-            continue;
-        }
         int join = 1;
         if (line[0] == '&') {
             for(int i = 0; i < lineSize - 1; i++) {
@@ -120,6 +116,11 @@ main(void)
             }
             line[lineSize - 1] = '\0';
             join = 0;
+        }
+
+        if (PrepareArguments(line, argv, MAX_ARG_COUNT) == 0) {
+            WriteError("too many arguments.", OUTPUT);
+            continue;
         }
         // Comment and uncomment according to whether command line arguments
         // are given in the system call or not.
