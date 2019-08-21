@@ -72,6 +72,7 @@ AddressSpace::AddressSpace(OpenFile *executable)
     // Guardamos el executable en el address_space
     address_exec = executable;
 
+
     // How big is address space?
     unsigned size = noffH.code.size + noffH.initData.size
                     + noffH.uninitData.size + USER_STACK_SIZE;
@@ -87,7 +88,7 @@ AddressSpace::AddressSpace(OpenFile *executable)
     isValid = true; //numPages <= userProgramFrameTable->CountClear();
     // TODO
 
-    DEBUG('a', "Initializing address space, num pages %u, size %u\n",
+    DEBUG('f', "Initializing address space, num pages %u, size %u\n",
           numPages, size);
 
     // First, set up the translation.
@@ -141,18 +142,21 @@ AddressSpace::AddressSpace(OpenFile *executable)
 /// VER SI ES NECESARIO EL IF
 AddressSpace::~AddressSpace()
 {
+    DEBUG('f', "AddressSpace::~AddressSpace %s \n", currentThread->GetName());
     for (unsigned i = 0; i < numPages; i++) {
         // Si tiene asignada pagina fisica, la borro
-        if (pageTable[i].physicalPage != -1) {
+        if (!inFileOrSwap(pageTable[i].physicalPage)) {
             //userProramFrameTable->Clear(pageTable[i].physicalPage);
-            //memset(&(machine->GetMMU()->mainMemory[pageTable[i].physicalPage * PAGE_SIZE]), 0, PAGE_SIZE);
+            memoryManager->CleanMemory(this, pageTable[i].physicalPage);
+            memset(&(machine->GetMMU()->mainMemory[pageTable[i].physicalPage * PAGE_SIZE]), 0, PAGE_SIZE);
         }
     }
     delete [] pageTable;
     // TODO currentThread->CloseFile(swapFile);
-    char *filename = GetSwapFileName();
-    fileSystem->Remove(filename);
-    delete [] filename;
+    if (swapFileName != nullptr) {
+        fileSystem->Remove(swapFileName);
+        // delete [] swapFileName;
+    }
 }
 
 /// Set the initial values for the user-level register set.
@@ -178,7 +182,7 @@ AddressSpace::InitRegisters()
     // allocated the stack; but subtract off a bit, to make sure we do not
     // accidentally reference off the end!
     machine->WriteRegister(STACK_REG, numPages * PAGE_SIZE - 16);
-    DEBUG('a', "Initializing stack register to %u\n",
+    DEBUG('f', "Initializing stack register to %u\n",
           numPages * PAGE_SIZE - 16);
 }
 
@@ -196,8 +200,8 @@ AddressSpace::SaveState()
         }
     }
     for (unsigned i = 0; i < numPages; i++) {
-        if (pageTable[i].physicalPage != -1 &&  pageTable[i].physicalPage != -2) {
-            UnloadPage(i);
+        if (!inFileOrSwap(pageTable[i].physicalPage)) { 
+           // UnloadPage(i);
         }
     }
 #endif
@@ -213,7 +217,7 @@ AddressSpace::RestoreState()
 {
 #ifdef USE_TLB
     // Limpio la tlb
-    DEBUG('f', "Limpio TLB!\n");
+    // DEBUG('f', "Limpio TLB!\n");
     for(unsigned i = 0; i < TLB_SIZE; i++) {
         machine->GetMMU()->tlb[i].valid = false;
     }
@@ -288,9 +292,11 @@ void copyVirtualAddressToMemory(unsigned virtualAddress, OpenFile *file, noffHea
 void
 AddressSpace::LoadPage(unsigned virtualAddress)
 {
+    GetSwapFileName();
     char *mainMemory = machine->GetMMU()->mainMemory;
     // Busco pagina virtual
     int virtualPage = virtualAddress / PAGE_SIZE;
+    // DEBUG('f', "AddressSpace::LoadPage %d\n", virtualPage);
     // Le asigno una fisica solo si no fue asignada antes
     if (inFile(pageTable[virtualPage].physicalPage)) {
         pageTable[virtualPage].physicalPage = memoryManager->AllocMemory(this, virtualPage);
@@ -337,6 +343,7 @@ void
 AddressSpace::UnloadPage(unsigned virtualPage)
 {
     ASSERT(!inFileOrSwap(pageTable[virtualPage].physicalPage));
+    //DEBUG('f', "AddressSpace::UnloadPage %d\n", virtualPage);
     int inTLB = isInTLB(pageTable[virtualPage]);
     // Si la pagina esta en la tlb la limpio primero
     if (inTLB != -1 && machine->GetMMU()->tlb[inTLB].valid)
@@ -351,9 +358,13 @@ AddressSpace::UnloadPage(unsigned virtualPage)
 char *
 AddressSpace::GetSwapFileName()
 {
-    char *filename = new char[SWAP_FILE_MAX_NAME_SIZE];
-    sprintf(filename, "swap.%d", currentThread->GetPid());
-    return filename;
+    if (swapFileName == nullptr) {
+        // Save swap's file name
+        swapFileName = new char[SWAP_FILE_MAX_NAME_SIZE];
+        sprintf(swapFileName, "swap.%d", currentThread->GetPid());
+    	DEBUG('f', "AddressSpace::GetSwapFileName %s - thread %s\n", swapFileName, currentThread->GetName());
+    }
+    return swapFileName;
 }
 
 //----------------------------------------------------------------------
@@ -363,6 +374,7 @@ void
 AddressSpace::CreateSwapFile()
 {
     char *filename = GetSwapFileName();
+    DEBUG('f', "AddressSpace::CreateSwapFile %s - thread %s\n", filename, currentThread->GetName());
     fileSystem->Create(filename, 0);
     swapFile = fileSystem->Open(filename);
     currentThread->AddFile(swapFile);
@@ -375,6 +387,7 @@ AddressSpace::CreateSwapFile()
 void
 AddressSpace::WriteToSwap(unsigned virtualPage)
 {
+    DEBUG('f', "AddressSpace::WriteToSwap %d - valid %d\n", virtualPage, pageTable[virtualPage].valid);
     if (!pageTable[virtualPage].valid) return;
     if (swapFile == nullptr) {
         CreateSwapFile();

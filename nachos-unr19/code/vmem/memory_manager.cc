@@ -27,13 +27,14 @@ MemoryManager::AllocMemory(AddressSpace *addrSpace, unsigned virtualPage)
 {
     // lock->Acquire();
     static unsigned queue_page = 0;
+    queue_page = (queue_page + 1) % NUM_PHYS_PAGES;
     unsigned pageNum = GetPageNumQueue(queue_page);
     if (coremap[pageNum].isAllocated) FreeMemory(pageNum);
     coremap[pageNum].virtualPage = virtualPage;
     coremap[pageNum].addressSpace = addrSpace;
     coremap[pageNum].isAllocated = true;
-    queue_page = (queue_page + 1) % NUM_PHYS_PAGES;
     // lock->Release();
+    DEBUG('l', "MemoryManager::AllocMemory %d \n", virtualPage);
     return pageNum;
 }
 
@@ -69,6 +70,7 @@ MemoryManager::GetPageNumLRU()
 void
 MemoryManager::FreeMemory(unsigned virtualPage)
 {
+    DEBUG('l', "MemoryManager::FreeMemory %d \n", virtualPage);
     AddressSpace *entryAddrSpace = coremap[virtualPage].addressSpace;
     int entryVirtualPage = coremap[virtualPage].virtualPage;
     entryAddrSpace->UnloadPage(entryVirtualPage);
@@ -78,7 +80,8 @@ MemoryManager::FreeMemory(unsigned virtualPage)
 void
 MemoryManager::CleanMemory(AddressSpace *addr, unsigned page)
 {
-    if (coremap[page].addressSpace == addr) {
-        coremap[page].isAllocated = false;
-    }
+    ASSERT(coremap[page].addressSpace == addr);
+    DEBUG('l', "MemoryManager::CleanMemory %d \n", page);
+//    bitmap->Clear(page);
+    coremap[page].isAllocated = false;
 }

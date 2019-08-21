@@ -90,6 +90,9 @@ private:
 
     ///
     char *GetSwapFileName();
+
+    ///
+    char * swapFileName;
 };
 
 

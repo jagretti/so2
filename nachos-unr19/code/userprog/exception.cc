@@ -50,7 +50,7 @@ void beginProcess(void *args)
 //---------------------------------------------------------------------
 int SaveInTLB(TranslationEntry toSave, int position)
 {
-    DEBUG('f', "Guardo en la tlb position %d\n", position);
+    DEBUG('k', "Exception::SaveInTLB position %d\n", position);
     TranslationEntry entry = machine->GetMMU()->tlb[position];
     if(entry.valid && entry.dirty) {
         currentThread->space->SaveEntry(entry);
@@ -124,7 +124,7 @@ SyscallHandler(ExceptionType _et)
     switch (scid) {
 
     case SC_HALT: {
-        DEBUG('k', "Shutdown, initiated by user program.\n");
+        DEBUG('k', "SC_HALT - Shutdown, initiated by user program.\n");
         interrupt->Halt();
         break;
     }
@@ -132,19 +132,19 @@ SyscallHandler(ExceptionType _et)
     case SC_CREATE: {
         int filenameAddr = machine->ReadRegister(4);
         if (filenameAddr == 0)
-            DEBUG('k', "Error: address to filename string is null.\n");
+            DEBUG('k', "SC_CREATE - Error: address to filename string is null.\n");
 
         char *filename = new char[FILE_NAME_MAX_LEN + 1];
         if (!ReadStringFromUser(filenameAddr, filename, sizeof filename))
-            DEBUG('k', "Error: filename string too long (maximum is %u bytes).\n",
+            DEBUG('k', "SC_CREATE - Error: filename string too long (maximum is %u bytes).\n",
                   FILE_NAME_MAX_LEN);
 
-        DEBUG('k', "Open requested for file `%s`.\n", filename);
+        DEBUG('k', "SC_CREATE - Open requested for file `%s`.\n", filename);
         if (fileSystem->Create(filename,0)) {
-            DEBUG('k', "Se creo el archivo %s correctamente\n", filename);
+            DEBUG('k', "SC_CREATE - Se creo el archivo %s correctamente\n", filename);
         }
         else {
-            DEBUG('k', "Error creando el archivo %s \n", filename);
+            DEBUG('k', "SC_CREATE - Error creando el archivo %s \n", filename);
         }
         delete []filename;
         break;
@@ -153,15 +153,15 @@ SyscallHandler(ExceptionType _et)
     case SC_REMOVE: {
         int fileNameAddr = machine->ReadRegister(4);
         if (fileNameAddr == 0)
-            DEBUG('a', "Error: address to filename string is null\n");
+            DEBUG('a', "SC_REMOVE - Error: address to filename string is null\n");
         char *filename = new char[FILE_NAME_MAX_LEN + 1];
         ReadStringFromUser(fileNameAddr, filename, FILE_NAME_MAX_LEN);
         bool remove_ok = fileSystem->Remove(filename);
         if (!remove_ok) {
-            DEBUG('k', "Error borrando el archivo %s\n", filename);
+            DEBUG('k', "SC_REMOVE - Error borrando el archivo %s\n", filename);
             machine->WriteRegister(2, -1);
         } else {
-            DEBUG('k', "Se borro el archivo %s correctamente\n", filename);
+            DEBUG('k', "SC_REMOVE - Se borro el archivo %s correctamente\n", filename);
         }
         delete []filename;
         break;
@@ -172,12 +172,12 @@ SyscallHandler(ExceptionType _et)
         ReadStringFromUser(machine->ReadRegister(4),name, 128);
         OpenFile *f = fileSystem->Open(name);
         if (f == nullptr) {
-            DEBUG('k', "Archivo con nombre %s vacio\n", name);
+            DEBUG('k', "SC_OPEN - Archivo con nombre %s vacio\n", name);
             machine->WriteRegister(2, -1);
         } else {
             int fd = currentThread->AddFile(f);
             machine->WriteRegister(2, fd);
-            DEBUG('k', "Se abrio archivo con nombre %s y fd %d\n", name, fd);
+            DEBUG('k', "SC_OPEN - Se abrio archivo con nombre %s y fd %d\n", name, fd);
         }
         delete []name;
         break;
@@ -185,12 +185,12 @@ SyscallHandler(ExceptionType _et)
 
     case SC_CLOSE: {
         int fd = machine->ReadRegister(4);
-        DEBUG('a', "Close requested for id %u.\n", fd);
+        DEBUG('k', "SC_CLOSE - close requested for id %u.\n", fd);
         if (fd < 2) {
-            DEBUG('k', "Hubo un error cerrando un archivo");
+            DEBUG('k', "SC_CLOSE - Hubo un error cerrando un archivo\n");
         } else {
             currentThread->CloseFile(fd);
-            DEBUG('k', "Se cerro archivo con fd %d", fd);
+            DEBUG('k', "SC_CLOSE - Se cerro archivo con fd %d\n", fd);
         }
         break;
     }
@@ -198,27 +198,27 @@ SyscallHandler(ExceptionType _et)
     case SC_WRITE: {
         int fd = machine->ReadRegister(6);
         int size = machine->ReadRegister(5);
-        DEBUG('k', "Se quiere escribir en la consola: |%d| caracteres\n", size);
+        DEBUG('k', "SC_WRITE - fd = %d size = %d\n", fd, size);
         char *buff = new char[size];
         if (fd != 0) { // Error (fd == 0) no se puede escribir en stdin
             int arg = machine->ReadRegister(4);
             if (fd == 1) { // Escribe en stdout
                 ReadStringFromUser(arg, buff, size);
-                DEBUG('k', "Se quiere escribir en la consola: |%s|\n", buff);
+                DEBUG('k', "SC_WRITE - escribir en la consola: |%s|\n", buff);
                 for(int i = 0; i < size; i++) {
                     sconsole->WriteChar(buff[i]);
                 }
             } else {
                 OpenFile *f = currentThread->GetFile(fd);
                 if (f == nullptr) {
-                    DEBUG('k', "El archivo %d no esta abierto\n", fd);
+                    DEBUG('k', "SC_WRITE - el archivo %d no esta abierto\n", fd);
                     delete []buff;
                     break;
                 }
                 // Leo del espacio de usuario el string a escribir
                 ReadStringFromUser(arg, buff, size);
                 size = strlen(buff);
-                DEBUG('k', "Escribo en archivo %d\n", fd);
+                DEBUG('k', "SC_WRITE - escribo en archivo %d\n", fd);
                 f->Write((const char*)buff, size);
             }
         }
@@ -231,6 +231,7 @@ SyscallHandler(ExceptionType _et)
         int size = machine->ReadRegister(5);
         char *buff = new char[size];
         int read = -1;
+        DEBUG('k', "SC_READ - fd = %d size = %d\n", fd, size);
         if (fd == 1) { //stdout
             machine->WriteRegister(2, read);
             delete []buff;
@@ -256,13 +257,13 @@ SyscallHandler(ExceptionType _et)
             }
         }
         machine->WriteRegister(2, read);
-        DEBUG('k', "Leo en archivo %d\n", fd);
         delete []buff;
         break;
     }
 
     case SC_EXIT:{
         int s = machine->ReadRegister(4);
+        DEBUG('k', "SC_EXIT - Status = %d nombre = %s\n", s, currentThread->GetName());
         currentThread->exitStatus = s;
         currentThread->Finish();
         break;
@@ -270,6 +271,7 @@ SyscallHandler(ExceptionType _et)
     case SC_JOIN:{
         int id = machine->ReadRegister(4);
         Thread *t = procTable[id];
+        DEBUG('k', "SC_JOIN - Id = %d nombre = %s\n", id, t->GetName());
         t->Join();
         machine->WriteRegister(2, t->exitStatus);
         break;
@@ -303,7 +305,7 @@ SyscallHandler(ExceptionType _et)
         t->Fork(beginProcess, args);
         DEBUG('k', "Ejecutar  %s args[1] %s\n", args[0], args[1]);
         machine->WriteRegister(2, id);
-        delete []path;
+        //delete []path;
         break;
     }
     default:
@@ -321,10 +323,12 @@ PageFaultHandler(ExceptionType et)
     static int position = 0;
     int virtualAddr = machine->ReadRegister(BAD_VADDR_REG);
     int virtualPage = virtualAddr / PAGE_SIZE;
+    DEBUG('k', "Exception::PageFaultHandler  virtualPage %d\n", virtualPage);
     // Busco la entrada en el espacio de direcciones del thread actual
     TranslationEntry entry = currentThread->space->GetEntry(virtualPage);
     #ifdef USE_DL
-        if (!entry.valid) {
+        //if (!entry.valid) {
+        if (inFileOrSwap(entry.physicalPage)) {
             currentThread->space->LoadPage(virtualAddr);
             entry = currentThread->space->GetEntry(virtualPage);
         }
