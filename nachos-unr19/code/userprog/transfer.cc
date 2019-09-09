@@ -17,9 +17,11 @@ bool ReadStringFromUser(int userAddress, char *outString,
         bool read = machine->ReadMem(userAddress, 1, &temp);
         DEBUG('a', "Lectura ReadMem %d\n", read);
         if(read) {
+            DEBUG('o', "ReadStringFromUser %c\n", (unsigned char) temp);
             *outString = (unsigned char) temp;
         } else {
             read = machine->ReadMem(userAddress, 1, &temp);
+            DEBUG('o', "ReadStringFromUser %c\n", (unsigned char) temp);
             *outString = (unsigned char) temp;
         }
         userAddress++;

@@ -108,7 +108,7 @@ AddressSpace::AddressSpace(OpenFile *executable)
         pageTable[i].use          = false;
         pageTable[i].dirty        = false;
         pageTable[i].readOnly     = false;
-          // If the code segment was entirely on a separate page, we could
+          // If the code `segment` was entirely on a separate page, we could
           // set its pages to be read-only.
         // Zero out the physical address space
     }
@@ -200,7 +200,7 @@ AddressSpace::SaveState()
         }
     }
     for (unsigned i = 0; i < numPages; i++) {
-        if (!inFileOrSwap(pageTable[i].physicalPage)) { 
+        if (!inFileOrSwap(pageTable[i].physicalPage)) {
            // UnloadPage(i);
         }
     }
@@ -298,6 +298,10 @@ AddressSpace::LoadPage(unsigned virtualAddress)
     int virtualPage = virtualAddress / PAGE_SIZE;
     // DEBUG('f', "AddressSpace::LoadPage %d\n", virtualPage);
     // Le asigno una fisica solo si no fue asignada antes
+    if (!inFileOrSwap()) {
+        // mark the page
+        pageTable[virtualPage].use = true;
+    } else {
     if (inFile(pageTable[virtualPage].physicalPage)) {
         pageTable[virtualPage].physicalPage = memoryManager->AllocMemory(this, virtualPage);
         // first byte of the page
@@ -317,6 +321,7 @@ AddressSpace::LoadPage(unsigned virtualAddress)
             swapFile->ReadAt(&mainMemory[physicalPage*PAGE_SIZE + i], 1, address++);
         }
     }
+}
     pageTable[virtualAddress / PAGE_SIZE].dirty = false;
     pageTable[virtualAddress / PAGE_SIZE].valid = true;
 }

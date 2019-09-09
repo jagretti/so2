@@ -50,7 +50,7 @@ void beginProcess(void *args)
 //---------------------------------------------------------------------
 int SaveInTLB(TranslationEntry toSave, int position)
 {
-    DEBUG('k', "Exception::SaveInTLB position %d\n", position);
+    // DEBUG('k', "Exception::SaveInTLB position %d\n", position);
     TranslationEntry entry = machine->GetMMU()->tlb[position];
     if(entry.valid && entry.dirty) {
         currentThread->space->SaveEntry(entry);
@@ -218,7 +218,7 @@ SyscallHandler(ExceptionType _et)
                 // Leo del espacio de usuario el string a escribir
                 ReadStringFromUser(arg, buff, size);
                 size = strlen(buff);
-                DEBUG('k', "SC_WRITE - escribo en archivo %d\n", fd);
+                DEBUG('k', "SC_WRITE - escribo en archivo %d - chars %d |%s|\n", fd, size, buff);
                 f->Write((const char*)buff, size);
             }
         }
