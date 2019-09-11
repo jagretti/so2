@@ -52,7 +52,7 @@ public:
     bool IsValid();
 
     // Retorna la entrada correspondiente a esa pagina virtual.
-    TranslationEntry GetEntry(int virtualPageIndex);
+    TranslationEntry *GetEntry(int virtualPageIndex);
 
     // Guarda la entrada en la pageTable del proceso.
     void SaveEntry(TranslationEntry toSave);

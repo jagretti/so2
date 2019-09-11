@@ -194,7 +194,7 @@ void
 AddressSpace::SaveState()
 {
 #ifdef USE_TLB
-    for (int i = 0; i < TLB_SIZE; i++) {
+    for (unsigned i = 0; i < TLB_SIZE; i++) {
         if (machine->GetMMU()->tlb[i].dirty and machine->GetMMU()->tlb[i].valid) { //PREGUNTAR SI ESTA BIEN!!
             this->SaveEntry(machine->GetMMU()->tlb[i]);
         }
@@ -241,10 +241,11 @@ AddressSpace::IsValid()
 // Obtener la i-esima posicion de la pageTable asociada
 // al espacio de direcciones del thread
 //----------------------------------------------------------------------
-TranslationEntry
+TranslationEntry *
 AddressSpace::GetEntry(int virtualPageIndex)
 {
-    return this->pageTable[virtualPageIndex];
+    // &this->pageTable[virtualPageIndex]
+    return this->pageTable + virtualPageIndex;
 }
 
 //----------------------------------------------------------------------
@@ -298,7 +299,7 @@ AddressSpace::LoadPage(unsigned virtualAddress)
     int virtualPage = virtualAddress / PAGE_SIZE;
     // DEBUG('f', "AddressSpace::LoadPage %d\n", virtualPage);
     // Le asigno una fisica solo si no fue asignada antes
-    if (!inFileOrSwap()) {
+    if (!inFileOrSwap(pageTable[virtualPage].physicalPage)) {
         // mark the page
         pageTable[virtualPage].use = true;
     } else {

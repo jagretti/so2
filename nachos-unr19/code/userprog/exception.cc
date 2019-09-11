@@ -325,15 +325,15 @@ PageFaultHandler(ExceptionType et)
     int virtualPage = virtualAddr / PAGE_SIZE;
     DEBUG('k', "Exception::PageFaultHandler  virtualPage %d\n", virtualPage);
     // Busco la entrada en el espacio de direcciones del thread actual
-    TranslationEntry entry = currentThread->space->GetEntry(virtualPage);
+    TranslationEntry *entry = currentThread->space->GetEntry(virtualPage);
     #ifdef USE_DL
         //if (!entry.valid) {
-        if (inFileOrSwap(entry.physicalPage)) {
+        if (inFileOrSwap(entry->physicalPage)) {
             currentThread->space->LoadPage(virtualAddr);
             entry = currentThread->space->GetEntry(virtualPage);
         }
     #endif
-    SaveInTLB(entry, position);
+    SaveInTLB(*entry, position);
     // position varia entre 0,1,2,3 y asi sucesivamente haciendo un FIFO sobre la tlb
     position = (position + 1) % TLB_SIZE;
     //printTLB();

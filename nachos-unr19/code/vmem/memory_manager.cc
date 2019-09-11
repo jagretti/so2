@@ -28,7 +28,8 @@ MemoryManager::AllocMemory(AddressSpace *addrSpace, unsigned virtualPage)
     // lock->Acquire();
     static unsigned queue_page = 0;
     queue_page = (queue_page + 1) % NUM_PHYS_PAGES;
-    unsigned pageNum = GetPageNumQueue(queue_page);
+    // unsigned pageNum = GetPageNumQueue(queue_page);
+    unsigned pageNum = GetPageNumLRU();
     if (coremap[pageNum].isAllocated) FreeMemory(pageNum);
     coremap[pageNum].virtualPage = virtualPage;
     coremap[pageNum].addressSpace = addrSpace;
@@ -60,13 +61,22 @@ MemoryManager::GetPageNumQueue(unsigned queue_page)
 unsigned
 MemoryManager::GetPageNumLRU()
 {
+    static unsigned queue_page = 0;
     unsigned victim = queue_page;
-    while (coremap[victim].addressSpace->GetEntry(coremap[victim]).use == 1) {
-        coremap[victim].addressSpace->GetEntry(coremap[victim]).use = 0;
+    // 1- search for an empty coremap frame
+    for (unsigned i = 0; i < NUM_PHYS_PAGES; i++) {
+	if (!coremap[i].isAllocated) {
+            return i;
+	 }
+    }
+    // 2- No empty frame so one must be chosen to be free
+    while (coremap[victim].addressSpace->GetEntry(coremap[victim].virtualPage)->use == 1) {
+        coremap[victim].addressSpace->GetEntry(coremap[victim].virtualPage)->use = 0;
         victim = (victim + 1) % NUM_PHYS_PAGES;
     }
     queue_page = victim; // que hacemos con el queue_page? cual usamos?
     queue_page = (queue_page + 1) % NUM_PHYS_PAGES; // +1 para la proxima vez
+    DEBUG('p', "MemoryManager::GetPageNumLRU %d \n", victim);
     return victim;
 }
 
