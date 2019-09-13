@@ -69,13 +69,22 @@ MemoryManager::GetPageNumLRU()
             return i;
 	 }
     }
-    // 2- No empty frame so one must be chosen to be free
-    while (coremap[victim].addressSpace->GetEntry(coremap[victim].virtualPage)->use == 1) {
-        coremap[victim].addressSpace->GetEntry(coremap[victim].virtualPage)->use = 0;
+    // 2- Search for an unused TranslationEntry
+    unsigned i = 0;
+    while (coremap[victim].addressSpace->GetEntry(coremap[victim].virtualPage)->use == 1 && i < NUM_PHYS_PAGES) {
         victim = (victim + 1) % NUM_PHYS_PAGES;
+	i++;
     }
-    queue_page = victim; // que hacemos con el queue_page? cual usamos?
-    queue_page = (queue_page + 1) % NUM_PHYS_PAGES; // +1 para la proxima vez
+    if (i == NUM_PHYS_PAGES) { // iterated over all the coremap and didn't found an unsed TranslationEntry
+        // 3- No empty frame or unsued so one must be chosen to be freed
+        while (coremap[victim].addressSpace->GetEntry(coremap[victim].virtualPage)->use == 1) {
+            coremap[victim].addressSpace->GetEntry(coremap[victim].virtualPage)->use = 0;
+            victim = (victim + 1) % NUM_PHYS_PAGES;
+        }
+    }
+
+    queue_page = victim; // update the queue with the current victim/position
+    queue_page = (queue_page + 1) % NUM_PHYS_PAGES; // update the queue's head
     DEBUG('p', "MemoryManager::GetPageNumLRU %d \n", victim);
     return victim;
 }
