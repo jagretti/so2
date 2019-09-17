@@ -135,7 +135,7 @@ SyscallHandler(ExceptionType _et)
             DEBUG('k', "SC_CREATE - Error: address to filename string is null.\n");
 
         char *filename = new char[FILE_NAME_MAX_LEN + 1];
-        if (!ReadStringFromUser(filenameAddr, filename, sizeof filename))
+        if (!ReadStringFromUser(filenameAddr, filename, FILE_NAME_MAX_LEN + 1))
             DEBUG('k', "SC_CREATE - Error: filename string too long (maximum is %u bytes).\n",
                   FILE_NAME_MAX_LEN);
 
@@ -327,8 +327,11 @@ PageFaultHandler(ExceptionType et)
     // Busco la entrada en el espacio de direcciones del thread actual
     TranslationEntry *entry = currentThread->space->GetEntry(virtualPage);
     #ifdef USE_DL
-        //if (!entry.valid) {
+        #ifndef VMEM
+        if (!entry.valid) {
+        #else
         if (inFileOrSwap(entry->physicalPage)) {
+        #endif
             currentThread->space->LoadPage(virtualAddr);
             entry = currentThread->space->GetEntry(virtualPage);
         }

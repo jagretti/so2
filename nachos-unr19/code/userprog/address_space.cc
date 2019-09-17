@@ -82,12 +82,16 @@ AddressSpace::AddressSpace(OpenFile *executable)
 
     // Check we are not trying to run anything too big -- at least until we
     // have virtual memory.
-    //ASSERT(numPages <= NUM_PHYS_PAGES);
+    #ifndef VMEM
+    ASSERT(numPages <= NUM_PHYS_PAGES);
+    #endif
 
     // Seteo si es valido o no el address_space
-    isValid = true; //numPages <= userProgramFrameTable->CountClear();
-    // TODO
-
+    #ifndef VMEM
+    isValid = numPages <= userProgramFrameTable->CountClear();
+    #else
+    isValid = true; 
+    #endif
     DEBUG('f', "Initializing address space, num pages %u, size %u\n",
           numPages, size);
 
@@ -145,18 +149,26 @@ AddressSpace::~AddressSpace()
     DEBUG('f', "AddressSpace::~AddressSpace %s \n", currentThread->GetName());
     for (unsigned i = 0; i < numPages; i++) {
         // Si tiene asignada pagina fisica, la borro
+        #ifndef VMEM
+        if (pageTable[i].physicalPage != -1) {
+            userProgramFrameTable->Clear(pageTable[i].physicalPage);
+        }
+        #else
         if (!inFileOrSwap(pageTable[i].physicalPage)) {
             //userProramFrameTable->Clear(pageTable[i].physicalPage);
             memoryManager->CleanMemory(this, pageTable[i].physicalPage);
             memset(&(machine->GetMMU()->mainMemory[pageTable[i].physicalPage * PAGE_SIZE]), 0, PAGE_SIZE);
         }
+        #endif
     }
     delete [] pageTable;
+    #ifdef VMEM
     // TODO currentThread->CloseFile(swapFile);
     if (swapFileName != nullptr) {
         fileSystem->Remove(swapFileName);
         // delete [] swapFileName;
     }
+    #endif
 }
 
 /// Set the initial values for the user-level register set.
@@ -199,11 +211,13 @@ AddressSpace::SaveState()
             this->SaveEntry(machine->GetMMU()->tlb[i]);
         }
     }
+    #ifdef VMEM
     for (unsigned i = 0; i < numPages; i++) {
         if (!inFileOrSwap(pageTable[i].physicalPage)) {
            // UnloadPage(i);
         }
     }
+    #endif
 #endif
 }
 
@@ -293,40 +307,54 @@ void copyVirtualAddressToMemory(unsigned virtualAddress, OpenFile *file, noffHea
 void
 AddressSpace::LoadPage(unsigned virtualAddress)
 {
+    #ifdef VMEM
     GetSwapFileName();
+    #endif
     char *mainMemory = machine->GetMMU()->mainMemory;
     // Busco pagina virtual
     int virtualPage = virtualAddress / PAGE_SIZE;
     // DEBUG('f', "AddressSpace::LoadPage %d\n", virtualPage);
     // Le asigno una fisica solo si no fue asignada antes
+    #ifndef VMEM
+    if (pageTable[virtualPage].physicalPage == -1) {
+        pageTable[virtualPage].physicalPage = userProgramFrameTable->Find();
+    }
+    // first byte of the page
+    unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
+    for (unsigned i = 0; i < PAGE_SIZE; i++) {
+        copyVirtualAddressToMemory(address + i, address_exec, noffH, mainMemory, pageTable);
+    }
+    #else
     if (!inFileOrSwap(pageTable[virtualPage].physicalPage)) {
         // mark the page
         pageTable[virtualPage].use = true;
     } else {
-    if (inFile(pageTable[virtualPage].physicalPage)) {
-        pageTable[virtualPage].physicalPage = memoryManager->AllocMemory(this, virtualPage);
-        // first byte of the page
-        unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
-        for (unsigned i = 0; i < PAGE_SIZE; i++) {
-            copyVirtualAddressToMemory(address + i, address_exec, noffH, \
-                                       mainMemory, pageTable);
+        if (inFile(pageTable[virtualPage].physicalPage)) {
+            pageTable[virtualPage].physicalPage = memoryManager->AllocMemory(this, virtualPage);
+            // first byte of the page
+            unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
+            for (unsigned i = 0; i < PAGE_SIZE; i++) {
+                copyVirtualAddressToMemory(address + i, address_exec, noffH, \
+                                           mainMemory, pageTable);
+            }
+        }
+        // La pagina esta en swap
+        if (inSwap(pageTable[virtualPage].physicalPage)) {
+            unsigned physicalPage = memoryManager->AllocMemory(this, virtualPage);
+            pageTable[virtualPage].physicalPage = physicalPage;
+            unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
+            for (unsigned i = 0; i < PAGE_SIZE; i++) {
+                // copy to the alloc(ed) memory the PAGE
+                swapFile->ReadAt(&mainMemory[physicalPage*PAGE_SIZE + i], 1, address++);
+            }
         }
     }
-    // La pagina esta en swap
-    if (inSwap(pageTable[virtualPage].physicalPage)) {
-        unsigned physicalPage = memoryManager->AllocMemory(this, virtualPage);
-        pageTable[virtualPage].physicalPage = physicalPage;
-        unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
-        for (unsigned i = 0; i < PAGE_SIZE; i++) {
-            // copy to the alloc(ed) memory the PAGE
-            swapFile->ReadAt(&mainMemory[physicalPage*PAGE_SIZE + i], 1, address++);
-        }
-    }
-}
     pageTable[virtualAddress / PAGE_SIZE].dirty = false;
+    #endif
     pageTable[virtualAddress / PAGE_SIZE].valid = true;
 }
 
+#ifdef VMEM
 //----------------------------------------------------------------------
 // Chequea si la entry esta o no en la tlb
 //----------------------------------------------------------------------
@@ -407,3 +435,4 @@ AddressSpace::WriteToSwap(unsigned virtualPage)
     }
     memset(&mainMemory[physicalAddress], 0, PAGE_SIZE);
 }
+#endif

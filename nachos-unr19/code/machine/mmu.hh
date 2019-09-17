@@ -19,7 +19,11 @@
 const unsigned PAGE_SIZE = SECTOR_SIZE;  ///< Set the page size equal to the
                                          ///< disk sector size, for
                                          ///< simplicity.
+#ifdef VMEM
 const unsigned NUM_PHYS_PAGES = 8;
+#else
+const unsigned NUM_PHYS_PAGES = 128;
+#endif
 const unsigned MEMORY_SIZE = NUM_PHYS_PAGES * PAGE_SIZE;
 const unsigned TLB_SIZE = 4;  ///< if there is a TLB, make it small.
 

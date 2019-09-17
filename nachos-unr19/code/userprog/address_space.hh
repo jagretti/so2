@@ -60,7 +60,9 @@ public:
     // Carga una pagina desde el executable
     void LoadPage(unsigned virtualAddress);
 
+    #ifdef VMEM
     void UnloadPage(unsigned virtualPage);
+    #endif
 
 private:
 
@@ -79,9 +81,10 @@ private:
     /// noffHeader
     noffHeader noffH;
 
+    #ifdef VMEM
     /// swap file
     OpenFile *swapFile;
-
+    
     ///
     void WriteToSwap(unsigned virtualPage);
 
@@ -93,6 +96,7 @@ private:
 
     ///
     char * swapFileName;
+    #endif
 };
 
 
