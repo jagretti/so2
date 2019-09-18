@@ -28,8 +28,8 @@ MemoryManager::AllocMemory(AddressSpace *addrSpace, unsigned virtualPage)
     // lock->Acquire();
     static unsigned queue_page = 0;
     queue_page = (queue_page + 1) % NUM_PHYS_PAGES;
-    // unsigned pageNum = GetPageNumQueue(queue_page);
-    unsigned pageNum = GetPageNumLRU();
+    unsigned pageNum = GetPageNumQueue(queue_page);
+    //unsigned pageNum = GetPageNumLRU();
     if (coremap[pageNum].isAllocated) FreeMemory(pageNum);
     coremap[pageNum].virtualPage = virtualPage;
     coremap[pageNum].addressSpace = addrSpace;

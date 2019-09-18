@@ -98,7 +98,7 @@ Initialize(int argc, char **argv)
 
     int argCount;
     const char *debugArgs = "";
-    bool randomYield = false;
+    bool randomYield = true;
 
     // 2007, Jose Miguel Santos Espino
     bool preemptiveScheduling = false;
