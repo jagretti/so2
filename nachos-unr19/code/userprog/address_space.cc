@@ -343,10 +343,7 @@ AddressSpace::LoadPage(unsigned virtualAddress)
             unsigned physicalPage = memoryManager->AllocMemory(this, virtualPage);
             pageTable[virtualPage].physicalPage = physicalPage;
             unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
-            for (unsigned i = 0; i < PAGE_SIZE; i++) {
-                // copy to the alloc(ed) memory the PAGE
-                swapFile->ReadAt(&mainMemory[physicalPage*PAGE_SIZE + i], 1, address++);
-            }
+            swapFile->ReadAt(&mainMemory[physicalPage*PAGE_SIZE], PAGE_SIZE, address);
         }
     }
     pageTable[virtualAddress / PAGE_SIZE].dirty = false;
@@ -429,10 +426,7 @@ AddressSpace::WriteToSwap(unsigned virtualPage)
     char *mainMemory = machine->GetMMU()->mainMemory;
     unsigned physicalAddress = pageTable[virtualPage].physicalPage * PAGE_SIZE;
     unsigned virtualAddress = virtualPage * PAGE_SIZE;
-    for (unsigned i = 0; i < PAGE_SIZE; i++) {
-        // copy the mainMemory to the swap
-        swapFile->WriteAt(&mainMemory[physicalAddress + i], 1, virtualAddress++);
-    }
+    swapFile->WriteAt(&mainMemory[physicalAddress], PAGE_SIZE, virtualAddress);
     memset(&mainMemory[physicalAddress], 0, PAGE_SIZE);
 }
 #endif
