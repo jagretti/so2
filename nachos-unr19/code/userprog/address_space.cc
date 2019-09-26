@@ -72,7 +72,6 @@ AddressSpace::AddressSpace(OpenFile *executable)
     // Guardamos el executable en el address_space
     address_exec = executable;
 
-
     // How big is address space?
     unsigned size = noffH.code.size + noffH.initData.size
                     + noffH.uninitData.size + USER_STACK_SIZE;
@@ -91,6 +90,8 @@ AddressSpace::AddressSpace(OpenFile *executable)
     isValid = numPages <= userProgramFrameTable->CountClear();
     #else
     isValid = true; 
+    swapFile = nullptr;
+    swapFileName = nullptr;
     #endif
     DEBUG('f', "Initializing address space, num pages %u, size %u\n",
           numPages, size);
@@ -102,7 +103,7 @@ AddressSpace::AddressSpace(OpenFile *executable)
     for (unsigned i = 0; i < numPages; i++) {
         pageTable[i].virtualPage  = i;
         #ifdef USE_DL
-            pageTable[i].physicalPage = -1;
+            pageTable[i].physicalPage = PAGE_IN_FILE;
             pageTable[i].valid = false;
         #else
             pageTable[i].physicalPage = userProgramFrameTable->Find();
@@ -343,6 +344,7 @@ AddressSpace::LoadPage(unsigned virtualAddress)
             unsigned physicalPage = memoryManager->AllocMemory(this, virtualPage);
             pageTable[virtualPage].physicalPage = physicalPage;
             unsigned address = (virtualAddress / PAGE_SIZE) * PAGE_SIZE;
+            memset(&mainMemory[physicalPage*PAGE_SIZE], 0, PAGE_SIZE);
             swapFile->ReadAt(&mainMemory[physicalPage*PAGE_SIZE], PAGE_SIZE, address);
         }
     }
@@ -409,7 +411,7 @@ AddressSpace::CreateSwapFile()
     fileSystem->Create(filename, 0);
     swapFile = fileSystem->Open(filename);
     currentThread->AddFile(swapFile);
-    delete filename;
+    //delete filename;
 }
 
 //----------------------------------------------------------------------

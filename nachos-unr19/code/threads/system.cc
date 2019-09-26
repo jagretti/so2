@@ -192,11 +192,17 @@ Initialize(int argc, char **argv)
     userProgramFrameTable = new Bitmap(NUM_PHYS_PAGES);
     sconsole = new SynchConsole(nullptr, nullptr);
     procTable = new Thread*[MAX_PROCESS];
+    for (unsigned i = 0; i < MAX_PROCESS; i++) {
+         procTable[i] = nullptr;
+    }
     SetExceptionHandlers();
 #endif
 
 #ifdef VMEM
     coremap = new Coremap[NUM_PHYS_PAGES];
+    for (unsigned i = 0; i < NUM_PHYS_PAGES; i++) {
+         coremap[i].isAllocated = false;
+    }
     memoryManager = new MemoryManager(coremap, userProgramFrameTable);
 #endif
 

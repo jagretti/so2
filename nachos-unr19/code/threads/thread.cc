@@ -51,6 +51,9 @@ Thread::Thread(const char *threadName, int threadPriority, bool willJoin)
     }
 #ifdef USER_PROGRAM
     space    = nullptr;
+    for (unsigned i = 0; i < MAX_FILES; i++) {
+        files[i] = nullptr;
+    }
 #endif
 }
 
@@ -354,7 +357,7 @@ int
 Thread::AddFile(OpenFile *f)
 {
     for(unsigned i = 2; i < MAX_FILES; i++) { //El 0 y 1 son stdin y stdout
-    	if (files[i] == NULL) {
+    	if (files[i] == nullptr) {
     		files[i] = f;
     		return i;
     	}
