@@ -20,7 +20,7 @@ const unsigned PAGE_SIZE = SECTOR_SIZE;  ///< Set the page size equal to the
                                          ///< disk sector size, for
                                          ///< simplicity.
 #ifdef VMEM
-const unsigned NUM_PHYS_PAGES = 5;
+const unsigned NUM_PHYS_PAGES = 4;
 #else
 const unsigned NUM_PHYS_PAGES = 128;
 #endif

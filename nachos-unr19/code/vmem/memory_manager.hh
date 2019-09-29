@@ -17,6 +17,7 @@ public:
     void CleanMemory(AddressSpace *addressSpace, unsigned index);
     unsigned GetPageNumQueue(unsigned queue_page);
     unsigned GetPageNumLRU();
+    void printCoremap();
 
 private:
     Coremap *coremap;

@@ -64,7 +64,7 @@ void printTLB()
     printf("--------------\n");
     for(unsigned i = 0; i < TLB_SIZE; i++) {
         printf("TLB[%d] -- ", i);
-        printf("physical: %d virtual: %d dirty: %d valid: %d\n",
+        printf("PhysicalPage: %d VirtualPage: %d dirty: %d valid: %d\n",
                machine->GetMMU()->tlb[i].physicalPage,
                machine->GetMMU()->tlb[i].virtualPage,
                machine->GetMMU()->tlb[i].dirty,
@@ -339,7 +339,6 @@ PageFaultHandler(ExceptionType et)
     SaveInTLB(*entry, position);
     // position varia entre 0,1,2,3 y asi sucesivamente haciendo un FIFO sobre la tlb
     position = (position + 1) % TLB_SIZE;
-    //printTLB();
 }
 
 /// By default, only system calls have their own handler.  All other

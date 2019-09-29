@@ -362,7 +362,8 @@ isInTLB(TranslationEntry entry)
 {
     int inTLB = -1;
     for (unsigned i = 0; i < TLB_SIZE; i++) {
-        if (machine->GetMMU()->tlb[i].physicalPage == entry.physicalPage) {
+        if (machine->GetMMU()->tlb[i].valid and 
+            machine->GetMMU()->tlb[i].physicalPage == entry.physicalPage) {
             inTLB = i;
         }
     }

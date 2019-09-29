@@ -8,12 +8,25 @@ MemoryManager::MemoryManager(Coremap *cm, Bitmap *bm)
 {
     coremap = cm;
     bitmap = bm; // userProgramframetable
-    lock = new Lock("MML");
 }
 
 MemoryManager::~MemoryManager()
 {
-    delete lock;
+
+}
+
+void
+MemoryManager::printCoremap()
+{
+    printf("--------------\n");
+    for(unsigned i = 0; i < NUM_PHYS_PAGES; i++) {
+        printf("COREMAP[%d] -- ", i);
+        printf("AddressSpace: %p VirtualPage: %d isAllocated: %d inUse %d\n",
+            coremap[i].addressSpace,
+            coremap[i].virtualPage,
+            coremap[i].isAllocated,
+            coremap[i].inUse);
+    }
 }
 
 //-------------------------------------------------
@@ -25,7 +38,6 @@ MemoryManager::~MemoryManager()
 int
 MemoryManager::AllocMemory(AddressSpace *addrSpace, unsigned virtualPage)
 {
-    // lock->Acquire();
     static unsigned queue_page = 0;
     queue_page = (queue_page + 1) % NUM_PHYS_PAGES;
     unsigned pageNum = GetPageNumQueue(queue_page);
@@ -34,7 +46,6 @@ MemoryManager::AllocMemory(AddressSpace *addrSpace, unsigned virtualPage)
     coremap[pageNum].virtualPage = virtualPage;
     coremap[pageNum].addressSpace = addrSpace;
     coremap[pageNum].isAllocated = true;
-    // lock->Release();
     DEBUG('l', "MemoryManager::AllocMemory %d \n", virtualPage);
     return pageNum;
 }
