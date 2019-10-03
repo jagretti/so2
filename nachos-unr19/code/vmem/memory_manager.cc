@@ -40,8 +40,8 @@ MemoryManager::AllocMemory(AddressSpace *addrSpace, unsigned virtualPage)
 {
     static unsigned queue_page = 0;
     queue_page = (queue_page + 1) % NUM_PHYS_PAGES;
-    unsigned pageNum = GetPageNumQueue(queue_page);
-    //unsigned pageNum = GetPageNumLRU();
+    //unsigned pageNum = GetPageNumQueue(queue_page);
+    unsigned pageNum = GetPageNumLRU();
     if (coremap[pageNum].isAllocated) FreeMemory(pageNum);
     coremap[pageNum].virtualPage = virtualPage;
     coremap[pageNum].addressSpace = addrSpace;
@@ -83,15 +83,18 @@ MemoryManager::GetPageNumLRU()
     }
     // 2- Search for an unused TranslationEntry
     unsigned i = 0;
-    while (coremap[victim].addressSpace->GetEntry(coremap[victim].virtualPage)->use == 1 && i < NUM_PHYS_PAGES) {
+    while (coremap[victim].addressSpace->GetEntry(coremap[victim].virtualPage)->use && i < NUM_PHYS_PAGES) {
+        coremap[victim].addressSpace->GetEntry(coremap[victim].virtualPage)->use = 0;
         victim = (victim + 1) % NUM_PHYS_PAGES;
-	i++;
+	    i++;
     }
     if (i == NUM_PHYS_PAGES) { // iterated over all the coremap and didn't found an unsed TranslationEntry
         // 3- No empty frame or unsued so one must be chosen to be freed
-        while (coremap[victim].addressSpace->GetEntry(coremap[victim].virtualPage)->use == 1) {
-            coremap[victim].addressSpace->GetEntry(coremap[victim].virtualPage)->use = 0;
+        i = 0;
+        while (coremap[victim].addressSpace->GetEntry(coremap[victim].virtualPage)->dirty && i < NUM_PHYS_PAGES) {
+            // don't change the dirty value
             victim = (victim + 1) % NUM_PHYS_PAGES;
+            i++; // at most NUM_PHYS_PAGES
         }
     }
 
