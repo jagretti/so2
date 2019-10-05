@@ -22,6 +22,5 @@ public:
 private:
     Coremap *coremap;
     Bitmap *bitmap;
-    Lock *lock;
 };
 #endif // NACHOS_VMEM_MEMORY_MANAGER__HH
