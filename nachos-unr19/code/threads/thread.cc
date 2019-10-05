@@ -369,7 +369,7 @@ void
 Thread::CloseFile(unsigned f)
 {
 	if (f < MAX_FILES && f > 1) {
-		files[f] = NULL;
+		files[f] = nullptr;
     }
 }
 
@@ -379,7 +379,7 @@ Thread::GetFile(unsigned f)
 	if (f < MAX_FILES && f > 1) {
 		return files[f];
     } else {
-        return NULL;
+        return nullptr;
     }
 }
 
